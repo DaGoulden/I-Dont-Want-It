@@ -1,13 +1,4 @@
 {
-  "itemGroup.idontwantit": "Example Mod Tab",
-  "block.idontwantit.example_block": "Example Block",
-  "item.idontwantit.example_item": "Example Item",
-
-  "idontwantit.configuration.title": "I Don't Want It Configs",
-  "idontwantit.configuration.section.idontwantit.common.toml": "I Don't Want It Configs",
-  "idontwantit.configuration.section.idontwantit.common.toml.title": "I Don't Want It Configs",
-  "idontwantit.configuration.items": "Item List",
-  "idontwantit.configuration.logDirtBlock": "Log Dirt Block",
-  "idontwantit.configuration.magicNumberIntroduction": "Magic Number Text",
-  "idontwantit.configuration.magicNumber": "Magic Number"
+  "key.categories.idontwantit": "I Don't Want It",
+  "key.idontwantit.open_menu": "Open Menu/Ignore Filters"
 }
