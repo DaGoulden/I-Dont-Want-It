@@ -29,8 +29,8 @@ public class MenuScreen extends Screen {
     final int secondaryColor = 0x55000000;
     final int hoveredAdditiveColor = 0x88000000;
     final int linesColor = 0xFFFFFF;
-    final int activeColor = 0xFF00AA00;
-    final int inactiveColor = 0xFFAAAAAA;
+    final int goodMeaningColor = 0xFF00AA00;
+    final int badMeaningColor = 0xFFAAAAAA;
 
     int customHeight;
     int spacedX;
@@ -156,7 +156,7 @@ public class MenuScreen extends Screen {
                     checkboxY + 2,
                     checkboxX + 2 + (squareSize - 4),
                     checkboxY + 2 + (squareSize - 4),
-                    activeColor);
+                    goodMeaningColor);
         }
 
 // CLOSE BUTTON
@@ -236,13 +236,16 @@ public class MenuScreen extends Screen {
                         stateBoxWidth,
                         stateBoxHeight,
                         (0xFF << 24) | linesColor);
-                float stateProgress = stateButtonElapsed / (float) stateButtonDuration;
-                int stateColor = lerpColor(inactiveColor, activeColor, stateProgress);
-                g.fill( stateBoxX + 2 + (int)((stateBoxWidth - stateBoxHeight) * stateProgress),
-                        stateBoxY + 2,
-                        stateBoxX + stateBoxHeight - 2 + (int)((stateBoxWidth - stateBoxHeight) * stateProgress),
-                        stateBoxY + stateBoxHeight - 2,
+                float stateProgress = easeInOutCubic(stateButtonElapsed / (float) stateButtonDuration);
+                int stateColor = lerpColor(badMeaningColor, goodMeaningColor, stateProgress);
+                g.pose().pushPose();
+                g.pose().translate(stateBoxX + ((stateBoxWidth - stateBoxHeight) * stateProgress), stateBoxY, 0);
+                g.fill( 2,
+                        2,
+                        stateBoxHeight - 2,
+                        stateBoxHeight - 2,
                         stateColor);
+                g.pose().popPose();
 
 // NAME BUTTON
                 int nameButtonX = left + height + spaceBetweenButtons;
@@ -274,15 +277,14 @@ public class MenuScreen extends Screen {
                         deleteButton.getY() + deleteButton.getHeight() / 2 - font.lineHeight / 2,
                         linesColor);
                 if (deleteConfirmationElapsed <= deleteConfirmationDuration) {
-                    float deleteT = deleteConfirmationElapsed / (float) deleteConfirmationDuration;
-                    int deleteAlpha = (int)((1f - deleteT) * 255);
-                    int deleteColor = (deleteAlpha << 24) | 0xFF0000;
-                    if (deleteAlpha > 0) {
+                    float deleteProgress = easeInOutCubic(deleteConfirmationElapsed / (float) deleteConfirmationDuration);
+                    int deleteAlpha = (int)((1f - deleteProgress) * 255);
+                    if (deleteAlpha > 2) {
                         g.fill( deleteButton.getX(),
                             deleteButton.getY(),
                             deleteButton.getX() + deleteButton.getWidth(),
                             deleteButton.getY() + deleteButton.getHeight(),
-                            deleteColor);
+                            (deleteAlpha << 24) & badMeaningColor);
                         g.drawCenteredString(font,
                                 "¿\uD83D\uDDD1?",
                                 deleteButton.getX() + deleteButton.getWidth() / 2,
@@ -419,5 +421,14 @@ public class MenuScreen extends Screen {
         int b = (int)(b1 + (b2 - b1) * t);
 
         return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    private float easeInOutCubic(float t) {
+        if (t < 0.5f) {
+            return 4f * t * t * t;
+        } else {
+            float f = 2f * t - 2f;
+            return 1f + 0.5f * f * f * f;
+        }
     }
 }
