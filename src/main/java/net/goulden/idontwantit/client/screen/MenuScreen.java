@@ -25,8 +25,6 @@ public class MenuScreen extends Screen {
         return false;
     }
 
-    private int screenTicks = 0;
-
     final int primaryColor = 0x99000000;
     final int secondaryColor = 0x55000000;
     final int hoveredAdditiveColor = 0x88000000;
@@ -42,6 +40,10 @@ public class MenuScreen extends Screen {
     int firstLineEndInY;
     int secondLineStartInY;
 
+    int stateButtonDuration = 10;
+    int deleteConfirmationDuration = 30;
+
+    ProfileListWidget profilesList;
     private Button settingsButton;
     private Button whitelistButton;
     private Button closeButton;
@@ -58,7 +60,7 @@ public class MenuScreen extends Screen {
         secondLineStartInY = spacedY * 9 - customHeight;
 
 // LIST OF PROFILES
-        ProfileListWidget profilesList = new ProfileListWidget(
+        profilesList = new ProfileListWidget(
                 minecraft,
                 width,
                 (height - (firstLineEndInY + spaceBetweenButtons)) - (height - (secondLineStartInY - spaceBetweenButtons)),
@@ -185,20 +187,18 @@ public class MenuScreen extends Screen {
 
             final String profileName;
 
-            int deleteConfirmationStartTick = -1;
-            int deleteConfirmationDuration = 30;
-            int toggleStateButtonStartTick = -1;
-            int toggleStateButtonDuration = 10;
+            int stateButtonElapsed;
+            int deleteConfirmationElapsed;
 
             public ProfileEntry(String profileName) {
                 this.profileName = profileName;
 
+                stateButtonElapsed = ProfileManager.isProfileActive(profileName) ? stateButtonDuration : 0;
+                deleteConfirmationElapsed = deleteConfirmationDuration + 1;
+
 // STATE BUTTON
                 stateButton = new CustomButton(
-                        b -> {
-                            ProfileManager.toggleProfileState(profileName);
-                            toggleStateButtonStartTick = screenTicks;
-                        },
+                        b -> ProfileManager.toggleProfileState(profileName),
                         secondaryColor, hoveredAdditiveColor);
 
 // NAME BUTTON
@@ -209,14 +209,11 @@ public class MenuScreen extends Screen {
 // DELETE BUTTON
                 deleteButton = new CustomButton(
                         b -> {
-                            if (deleteConfirmationStartTick >= 0) {
-                                int elapsed = screenTicks - deleteConfirmationStartTick;
-                                if (elapsed < deleteConfirmationDuration) {
-                                    ProfileManager.deleteProfile(profileName);
-                                    refreshList();
-                                }
+                            if (deleteConfirmationElapsed <= deleteConfirmationDuration) {
+                                ProfileManager.deleteProfile(profileName);
+                                refreshList();
                             }
-                            deleteConfirmationStartTick = screenTicks;
+                            deleteConfirmationElapsed = 0;
                         },
                         secondaryColor, hoveredAdditiveColor);
             }
@@ -239,12 +236,13 @@ public class MenuScreen extends Screen {
                         stateBoxWidth,
                         stateBoxHeight,
                         (0xFF << 24) | linesColor);
-                //float stateT =
-                g.fill( stateBoxX + 2,
+                float stateProgress = stateButtonElapsed / (float) stateButtonDuration;
+                int stateColor = lerpColor(inactiveColor, activeColor, stateProgress);
+                g.fill( stateBoxX + 2 + (int)((stateBoxWidth - stateBoxHeight) * stateProgress),
                         stateBoxY + 2,
-                        stateBoxX + stateBoxHeight - 2,
+                        stateBoxX + stateBoxHeight - 2 + (int)((stateBoxWidth - stateBoxHeight) * stateProgress),
                         stateBoxY + stateBoxHeight - 2,
-                        (0xFF << 24) | linesColor);
+                        stateColor);
 
 // NAME BUTTON
                 int nameButtonX = left + height + spaceBetweenButtons;
@@ -275,25 +273,36 @@ public class MenuScreen extends Screen {
                         deleteButton.getX() + deleteButton.getWidth() / 2,
                         deleteButton.getY() + deleteButton.getHeight() / 2 - font.lineHeight / 2,
                         linesColor);
-                if (deleteConfirmationStartTick >= 0) {
-                    int deleteElapsed = screenTicks - deleteConfirmationStartTick;
-                    if (deleteElapsed < deleteConfirmationDuration) {
-                        float deleteT = deleteElapsed / (float) deleteConfirmationDuration;
-                        int deleteAlpha = (int)((1f - deleteT) * 255);
-                        int deleteColor = (deleteAlpha << 24) | 0xFF0000;
+                if (deleteConfirmationElapsed <= deleteConfirmationDuration) {
+                    float deleteT = deleteConfirmationElapsed / (float) deleteConfirmationDuration;
+                    int deleteAlpha = (int)((1f - deleteT) * 255);
+                    int deleteColor = (deleteAlpha << 24) | 0xFF0000;
+                    if (deleteAlpha > 0) {
                         g.fill( deleteButton.getX(),
-                                deleteButton.getY(),
-                                deleteButton.getX() + deleteButton.getWidth(),
-                                deleteButton.getY() + deleteButton.getHeight(),
-                                deleteColor);
+                            deleteButton.getY(),
+                            deleteButton.getX() + deleteButton.getWidth(),
+                            deleteButton.getY() + deleteButton.getHeight(),
+                            deleteColor);
                         g.drawCenteredString(font,
                                 "¿\uD83D\uDDD1?",
                                 deleteButton.getX() + deleteButton.getWidth() / 2,
                                 deleteButton.getY() + deleteButton.getHeight() / 2 - font.lineHeight / 2,
                                 (deleteAlpha << 24) | linesColor);
-                    } else {
-                        deleteConfirmationStartTick = -1;
                     }
+                }
+            }
+
+            public void tick() {
+
+                boolean isActive = ProfileManager.isProfileActive(profileName);
+                if (isActive && stateButtonElapsed < stateButtonDuration) {
+                    stateButtonElapsed++;
+                } else if (!isActive && stateButtonElapsed > 0) {
+                    stateButtonElapsed--;
+                }
+
+                if (deleteConfirmationElapsed <= deleteConfirmationDuration) {
+                    deleteConfirmationElapsed++;
                 }
             }
 
@@ -386,6 +395,29 @@ public class MenuScreen extends Screen {
 
     @Override
     public void tick() {
-        screenTicks++;
+        for (var entry : profilesList.children()) {
+            if (entry instanceof ProfileListWidget.ProfileEntry profileEntry) {
+                profileEntry.tick();
+            }
+        }
+    }
+
+    private int lerpColor(int color1, int color2, float t) {
+        int a1 = (color1 >> 24) & 0xFF;
+        int r1 = (color1 >> 16) & 0xFF;
+        int g1 = (color1 >> 8) & 0xFF;
+        int b1 = color1 & 0xFF;
+
+        int a2 = (color2 >> 24) & 0xFF;
+        int r2 = (color2 >> 16) & 0xFF;
+        int g2 = (color2 >> 8) & 0xFF;
+        int b2 = color2 & 0xFF;
+
+        int a = (int)(a1 + (a2 - a1) * t);
+        int r = (int)(r1 + (r2 - r1) * t);
+        int g = (int)(g1 + (g2 - g1) * t);
+        int b = (int)(b1 + (b2 - b1) * t);
+
+        return (a << 24) | (r << 16) | (g << 8) | b;
     }
 }
