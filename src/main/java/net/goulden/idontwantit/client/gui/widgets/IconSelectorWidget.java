@@ -1,4 +1,4 @@
-package net.goulden.idontwantit.client.screen;
+package net.goulden.idontwantit.client.gui.widgets;
 
 import net.goulden.idontwantit.profile.ProfileManager;
 import net.minecraft.client.Minecraft;

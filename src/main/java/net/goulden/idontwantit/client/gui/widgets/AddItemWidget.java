@@ -1,5 +1,6 @@
-package net.goulden.idontwantit.client.screen;
+package net.goulden.idontwantit.client.gui.widgets;
 
+import net.goulden.idontwantit.client.gui.EditProfileItemsScreen;
 import net.goulden.idontwantit.profile.ProfileManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -78,10 +79,10 @@ public class AddItemWidget {
         );
 
         // Botón cerrar
-        this.closeButton = Button.builder(
+        /*this.closeButton = Button.builder(
                 Component.literal("Cerrar"),
                 button -> parent.closeAddItemWidget()
-        ).bounds(widgetX + widgetWidth / 2 - 50, widgetY + widgetHeight - 30, 100, 20).build();
+        ).bounds(widgetX + widgetWidth / 2 - 50, widgetY + widgetHeight - 30, 100, 20).build();*/
     }
 
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
@@ -146,7 +147,7 @@ public class AddItemWidget {
         }
 
         // Click fuera del widget = cerrar
-        parent.closeAddItemWidget();
+        //parent.closeAddItemWidget();
         return true;
     }
 
@@ -162,7 +163,7 @@ public class AddItemWidget {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         // ESC para cerrar
         if (keyCode == 256) { // GLFW_KEY_ESCAPE
-            parent.closeAddItemWidget();
+            //parent.closeAddItemWidget();
             return true;
         }
 

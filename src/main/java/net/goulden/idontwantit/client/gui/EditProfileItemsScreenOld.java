@@ -1,10 +1,12 @@
-package net.goulden.idontwantit.client.screen;
+package net.goulden.idontwantit.client.gui;
 
+import net.goulden.idontwantit.client.gui.widgets.AddItemWidget;
+import net.goulden.idontwantit.client.gui.widgets.CustomButton;
+import net.goulden.idontwantit.client.gui.widgets.IconSelectorWidget;
 import net.goulden.idontwantit.profile.ProfileManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -14,29 +16,15 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
-public class EditProfileItemsScreen extends Screen {
+public class EditProfileItemsScreenOld extends Screen {
 
     private final Screen parent;
     private String profileName;
 
-    private Button iconSelectorButton;
-    private EditBox nameEditBox;
-    private IgnoredItemListWidget itemList;
-    private Button addItemsButton;
-    private Button doneButton;
-
-    private AddItemWidget addItemWidget;
-    private IconSelectorWidget iconSelector;
-
-    private static final int ICON_SIZE = 16;
-
-    private int screenTicks = 0;
-    private int nameErrorStartTick = -1;
-    private static final int ERROR_DURATION = 20;
-
-    public EditProfileItemsScreen(Screen parent, String profileName) {
+    public EditProfileItemsScreenOld(Screen parent, String profileName) {
         super(Component.empty());
         this.parent = parent;
         this.profileName = profileName;
@@ -47,38 +35,17 @@ public class EditProfileItemsScreen extends Screen {
         return false;
     }
 
-    // ================= INIT =================
+
+    private IgnoredItemListWidget itemList;
+    private Button addItemsButton;
+    private Button doneButton;
+
+    private AddItemWidget addItemWidget;
+    private IconSelectorWidget iconSelector;
+
+// ================= INIT =================
     @Override
     protected void init() {
-
-// ICON SELECTOR BUTTON
-        iconSelectorButton = new CustomButton(
-                width / 2 - 120,
-                60,
-                ICON_SIZE,
-                ICON_SIZE,
-                b -> iconSelector = new IconSelectorWidget(
-                        this::closeIconSelector,
-                        profileName,
-                        width / 2,
-                        height / 2
-                ),
-                0xFF3A3A3A, 0xFF555555
-        );
-        addRenderableWidget(iconSelectorButton);
-
-// NAME EDIT BOX
-        nameEditBox = new EditBox(
-                font,
-                width / 2 - 100,
-                30,
-                140,
-                20,
-                Component.literal("Nombre del perfil")
-        );
-        nameEditBox.setMaxLength(16);
-        nameEditBox.setValue(profileName);
-        addRenderableWidget(nameEditBox);
 
 // LIST OF ITEMS
         itemList = new IgnoredItemListWidget(
@@ -110,90 +77,11 @@ public class EditProfileItemsScreen extends Screen {
         addRenderableWidget(doneButton);
     }
 
-    @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-
-// SCREEN NAME
-        g.drawString(font,
-                "Editar: " + profileName,
-                width / 2,
-                30,
-                0xFFFFFF);
-
-// NAME EDIT BOX
-        int shakeOffset = 0;
-        if (nameErrorStartTick >= 0) {
-            int elapsed = screenTicks - nameErrorStartTick;
-            if (elapsed <= ERROR_DURATION) {
-                float t = elapsed / (float) ERROR_DURATION;
-                shakeOffset = (int)(Math.sin(elapsed * 2.5f) * (1f - 1f - (1f - t) * (1f - t)) * 4f);
-                int color = ((int)((1f - t) * 255) << 24) | 0xFF0000;
-                int x = nameEditBox.getX() - 1 + shakeOffset;
-                int y = nameEditBox.getY() - 1;
-                int w = nameEditBox.getWidth() + 2;
-                int h = nameEditBox.getHeight() + 2;
-                g.fill(x, y, x + w, y + 1, color);
-                g.fill(x, y + h - 1, x + w, y + h, color);
-                g.fill(x, y, x + 1, y + h, color);
-                g.fill(x + w - 1, y, x + w, y + h, color);
-            } else {
-                nameErrorStartTick = -1;
-            }
-        }
-        int originalX = nameEditBox.getX();
-        if (shakeOffset != 0) {
-            nameEditBox.setX(originalX + shakeOffset);
-        }
-        super.render(g, mouseX, mouseY, partialTick);
-        nameEditBox.setX(originalX);
-
-// SCREEN NAME
-        g.drawCenteredString(
-                font,
-                "Editar: " + profileName,
-                width / 2,
-                15,
-                0xFFFFFF);
-
-        renderProfileIcon(g, mouseX, mouseY);
-
-        if (iconSelector != null)
-            iconSelector.render(g, mouseX, mouseY, partialTick);
-
-        if (addItemWidget != null)
-            addItemWidget.render(g, mouseX, mouseY, partialTick);
-    }
-
-
-
     /* ticks */
-
-    @Override
-    public void tick() {
-        screenTicks++;
-    }
 
     /* name change */
 
-    private void commitNameChange() {
 
-        String newName = nameEditBox.getValue().trim();
-
-        if (newName.isEmpty() || newName.equals(profileName) || ProfileManager.getAllProfiles().containsKey(newName)) {
-            triggerNameError();
-            return;
-        }
-
-        ProfileManager.renameProfile(profileName, newName);
-
-        nameEditBox.setFocused(false);
-
-        profileName = newName;
-    }
-
-    private void triggerNameError() {
-        nameErrorStartTick = screenTicks;
-    }
 
     /* icon */
 
@@ -210,36 +98,13 @@ public class EditProfileItemsScreen extends Screen {
         int x = getIconX();
         int y = getIconY();
 
-        return mouseX >= x && mouseX < x + ICON_SIZE && mouseY >= y && mouseY < y + ICON_SIZE;
-    }
-
-    private void renderProfileIcon(GuiGraphics graphics, int mouseX, int mouseY) {
-
-        ProfileManager.ItemProfile profile = ProfileManager.getProfile(profileName);
-        if (profile == null) return;
-
-        int x = getIconX();
-        int y = getIconY();
-
-        ItemStack iconStack = new ItemStack(profile.getIconItem());
-
-        if (isHoveringIcon(mouseX, mouseY)) {
-            graphics.fill(x - 1, y - 1, x + 17, y + 17, 0x80FFFFFF);
-        }
-
-        graphics.renderItem(iconStack, x, y);
-
-        int ignoredCount = profile.ignoredItems.size();
-
-        String text = ignoredCount + (ignoredCount == 1 ? " item ignorado" : " items ignorados");
-
-        graphics.drawString(font, text, width / 2 - 100, 55, 0xAAAAAA);
+        return mouseX >= x && mouseX < x + 16 && mouseY >= y && mouseY < y + 16;
     }
 
     /* modals */
 
     private void openAddItemWidget() {
-        addItemWidget = new AddItemWidget(this, profileName);
+        //addItemWidget = new AddItemWidget(this, profileName);
     }
 
     public void closeAddItemWidget() {
@@ -267,14 +132,6 @@ public class EditProfileItemsScreen extends Screen {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
 
-        if (keyCode == 257 || keyCode == 335) {
-
-            if (nameEditBox.isFocused()) {
-                commitNameChange();
-                return true;
-            }
-        }
-
         if (iconSelector != null)
             return iconSelector.keyPressed(keyCode, scanCode, modifiers);
 
@@ -284,7 +141,7 @@ public class EditProfileItemsScreen extends Screen {
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    @Override
+    /*@Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
 
         boolean wasFocused = nameEditBox.isFocused();
@@ -307,12 +164,7 @@ public class EditProfileItemsScreen extends Screen {
         }
 
         return result;
-    }
-
-    @Override
-    public void onClose() {
-        minecraft.setScreen(parent);
-    }
+    }*/
 
     /* list */
 
@@ -350,10 +202,7 @@ public class EditProfileItemsScreen extends Screen {
                     items.add(item);
             }
 
-            items.sort((a, b) ->
-                    a.getDescription().getString()
-                            .compareTo(b.getDescription().getString())
-            );
+            items.sort(Comparator.comparing(a -> a.getDescription().getString()));
 
             for (Item item : items)
                 addEntry(new ItemEntry(item));
@@ -408,7 +257,6 @@ public class EditProfileItemsScreen extends Screen {
                 removeButton.setY(top);
                 removeButton.render(graphics, mouseX, mouseY, partialTick);
 
-                graphics.fill(left, top, left + 2, top + 20, 0xFFFF0000);
             }
 
             @Override
@@ -421,5 +269,12 @@ public class EditProfileItemsScreen extends Screen {
                 return item.getDescription();
             }
         }
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        boolean result = super.mouseClicked(mouseX, mouseY, button);
+        this.setFocused(null);
+        return result;
     }
 }

@@ -2,7 +2,7 @@ package net.goulden.idontwantit.event;
 
 import net.goulden.idontwantit.IDontWantIt;
 import net.goulden.idontwantit.client.key.KeyBindings;
-import net.goulden.idontwantit.client.screen.MenuScreen;
+import net.goulden.idontwantit.client.gui.MainScreen;
 import net.goulden.idontwantit.profile.ProfileManager;
 import net.minecraft.client.Minecraft;
 import net.neoforged.api.distmarker.Dist;
@@ -36,7 +36,7 @@ public class PickupEventHandler {
             }
         } else {
             if (keyHeldTicks > 0 && keyHeldTicks < PickupAtTicks) {
-                mc.setScreen(new MenuScreen());
+                mc.setScreen(new MainScreen());
             }
             keyHeldTicks = 0;
             overridePickupFilter = false;

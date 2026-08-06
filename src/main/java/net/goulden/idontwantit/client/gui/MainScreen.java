@@ -1,5 +1,6 @@
-package net.goulden.idontwantit.client.screen;
+package net.goulden.idontwantit.client.gui;
 
+import net.goulden.idontwantit.client.gui.widgets.CustomButton;
 import net.goulden.idontwantit.profile.ProfileManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -14,9 +15,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MenuScreen extends Screen {
+import static net.goulden.idontwantit.util.ScreenVariables.*;
+import static net.goulden.idontwantit.util.RenderUtils.*;
 
-    public MenuScreen() {
+public class MainScreen extends Screen {
+
+    public MainScreen() {
         super(Component.empty());
     }
 
@@ -24,21 +28,6 @@ public class MenuScreen extends Screen {
     public boolean isPauseScreen() {
         return false;
     }
-
-    final int primaryColor = 0x99000000;
-    final int secondaryColor = 0x55000000;
-    final int hoveredAdditiveColor = 0x88000000;
-    final int linesColor = 0xFFFFFF;
-    final int goodMeaningColor = 0xFF00AA00;
-    final int badMeaningColor = 0xFFAAAAAA;
-
-    int customHeight;
-    int spacedX;
-    int spacedY;
-    final int spacedText = 3;
-    final int spaceBetweenButtons = 1;
-    int firstLineEndInY;
-    int secondLineStartInY;
 
     int stateButtonDuration = 10;
     int deleteConfirmationDuration = 30;
@@ -58,6 +47,8 @@ public class MenuScreen extends Screen {
         spacedY = height / 10;
         firstLineEndInY = spacedY + customHeight;
         secondLineStartInY = spacedY * 9 - customHeight;
+        int settingsButtonX = spacedX * 3 - customHeight;
+        int whitelistButtonWidth = font.width("Modo Whitelist") + spacedText + customHeight;
 
 // LIST OF PROFILES
         profilesList = new ProfileListWidget(
@@ -68,28 +59,6 @@ public class MenuScreen extends Screen {
                 0);
         addRenderableWidget(profilesList);
 
-// SETTINGS BUTTON
-        int settingsButtonX = spacedX * 3 - customHeight;
-        settingsButton = new CustomButton(
-                settingsButtonX,
-                secondLineStartInY,
-                customHeight,
-                customHeight,
-                b -> {},
-                primaryColor, hoveredAdditiveColor);
-        addRenderableWidget(settingsButton);
-
-// WHITELIST MODE BUTTON
-        int whitelistButtonWidth = font.width("Modo Whitelist") + spacedText + customHeight;
-        whitelistButton = new CustomButton(
-                settingsButtonX - spaceBetweenButtons - (whitelistButtonWidth),
-                secondLineStartInY,
-                whitelistButtonWidth,
-                customHeight,
-                b -> ProfileManager.toggleWhitelistMode(),
-                primaryColor, hoveredAdditiveColor);
-        addRenderableWidget(whitelistButton);
-
 // CLOSE BUTTON
         closeButton = new CustomButton(
                 spacedX,
@@ -99,6 +68,26 @@ public class MenuScreen extends Screen {
                 b -> onClose(),
                 primaryColor, hoveredAdditiveColor);
         addRenderableWidget(closeButton);
+
+// WHITELIST MODE BUTTON
+        whitelistButton = new CustomButton(
+                settingsButtonX - spaceBetweenButtons - (whitelistButtonWidth),
+                secondLineStartInY,
+                whitelistButtonWidth,
+                customHeight,
+                b -> ProfileManager.toggleWhitelistMode(),
+                primaryColor, hoveredAdditiveColor);
+        addRenderableWidget(whitelistButton);
+
+// SETTINGS BUTTON
+        settingsButton = new CustomButton(
+                settingsButtonX,
+                secondLineStartInY,
+                customHeight,
+                customHeight,
+                b -> {},
+                primaryColor, hoveredAdditiveColor);
+        addRenderableWidget(settingsButton);
     }
 
     @Override
@@ -203,7 +192,7 @@ public class MenuScreen extends Screen {
 
 // NAME BUTTON
                 nameButton = new CustomButton(
-                        b -> minecraft.setScreen(new EditProfileItemsScreen(MenuScreen.this, profileName)),
+                        b -> minecraft.setScreen(new EditProfileItemsScreen(MainScreen.this, profileName)),
                         secondaryColor, hoveredAdditiveColor);
 
 // DELETE BUTTON
@@ -219,8 +208,7 @@ public class MenuScreen extends Screen {
             }
 
             @Override
-            public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height,
-                               int mouseX, int mouseY, boolean hover, float partialTick) {
+            public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hover, float partialTick) {
 
 // STATE BUTTON
                 stateButton.setPosition(left, top);
@@ -236,15 +224,14 @@ public class MenuScreen extends Screen {
                         stateBoxWidth,
                         stateBoxHeight,
                         (0xFF << 24) | linesColor);
-                float stateProgress = easeInOutCubic(stateButtonElapsed / (float) stateButtonDuration);
-                int stateColor = lerpColor(badMeaningColor, goodMeaningColor, stateProgress);
+                float stateProgress = easeInOutCubic((float) stateButtonElapsed / stateButtonDuration);
                 g.pose().pushPose();
                 g.pose().translate(stateBoxX + ((stateBoxWidth - stateBoxHeight) * stateProgress), stateBoxY, 0);
                 g.fill( 2,
                         2,
                         stateBoxHeight - 2,
                         stateBoxHeight - 2,
-                        stateColor);
+                        lerpColor(secondaryColor, goodMeaningColor, stateProgress));
                 g.pose().popPose();
 
 // NAME BUTTON
@@ -277,14 +264,14 @@ public class MenuScreen extends Screen {
                         deleteButton.getY() + deleteButton.getHeight() / 2 - font.lineHeight / 2,
                         linesColor);
                 if (deleteConfirmationElapsed <= deleteConfirmationDuration) {
-                    float deleteProgress = easeInOutCubic(deleteConfirmationElapsed / (float) deleteConfirmationDuration);
+                    float deleteProgress = easeInOutCubic((float) deleteConfirmationElapsed / deleteConfirmationDuration);
                     int deleteAlpha = (int)((1f - deleteProgress) * 255);
                     if (deleteAlpha > 2) {
                         g.fill( deleteButton.getX(),
                             deleteButton.getY(),
                             deleteButton.getX() + deleteButton.getWidth(),
                             deleteButton.getY() + deleteButton.getHeight(),
-                            (deleteAlpha << 24) & badMeaningColor);
+                            (deleteAlpha << 24) | badMeaningColor);
                         g.drawCenteredString(font,
                                 "¿\uD83D\uDDD1?",
                                 deleteButton.getX() + deleteButton.getWidth() / 2,
@@ -309,13 +296,6 @@ public class MenuScreen extends Screen {
             }
 
             @Override
-            public boolean mouseClicked(double mouseX, double mouseY, int button) {
-                boolean result = super.mouseClicked(mouseX, mouseY, button);
-                this.setFocused(null);
-                return result;
-            }
-
-            @Override
             public @NotNull List<? extends GuiEventListener> children() {
                 return List.of(stateButton, nameButton, deleteButton);
             }
@@ -326,14 +306,13 @@ public class MenuScreen extends Screen {
             }
         }
 
-// ================= CREATE ENTRY =================
+        // Create Entry
         class CreateProfileEntry extends EntryBase {
 
             private final Button createProfileButton;
 
             public CreateProfileEntry() {
 
-// CREATE PROFILE BUTTON
                 createProfileButton = new CustomButton(
                         b -> {
                             int count = 1;
@@ -351,10 +330,8 @@ public class MenuScreen extends Screen {
             }
 
             @Override
-            public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height,
-                               int mouseX, int mouseY, boolean hover, float partialTick) {
+            public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hover, float partialTick) {
 
-// CREATE PROFILE BUTTON
                 createProfileButton.setPosition(left, top);
                 createProfileButton.setSize(width, height);
                 createProfileButton.render(g, mouseX, mouseY, partialTick);
@@ -389,46 +366,11 @@ public class MenuScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        boolean result = super.mouseClicked(mouseX, mouseY, button);
-        this.setFocused(null);
-        return result;
-    }
-
-    @Override
     public void tick() {
         for (var entry : profilesList.children()) {
             if (entry instanceof ProfileListWidget.ProfileEntry profileEntry) {
                 profileEntry.tick();
             }
-        }
-    }
-
-    private int lerpColor(int color1, int color2, float t) {
-        int a1 = (color1 >> 24) & 0xFF;
-        int r1 = (color1 >> 16) & 0xFF;
-        int g1 = (color1 >> 8) & 0xFF;
-        int b1 = color1 & 0xFF;
-
-        int a2 = (color2 >> 24) & 0xFF;
-        int r2 = (color2 >> 16) & 0xFF;
-        int g2 = (color2 >> 8) & 0xFF;
-        int b2 = color2 & 0xFF;
-
-        int a = (int)(a1 + (a2 - a1) * t);
-        int r = (int)(r1 + (r2 - r1) * t);
-        int g = (int)(g1 + (g2 - g1) * t);
-        int b = (int)(b1 + (b2 - b1) * t);
-
-        return (a << 24) | (r << 16) | (g << 8) | b;
-    }
-
-    private float easeInOutCubic(float t) {
-        if (t < 0.5f) {
-            return 4f * t * t * t;
-        } else {
-            float f = 2f * t - 2f;
-            return 1f + 0.5f * f * f * f;
         }
     }
 }

@@ -1,7 +1,6 @@
-package net.goulden.idontwantit.client.screen;
+package net.goulden.idontwantit.client.gui.widgets;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
@@ -26,14 +25,14 @@ public class CustomButton extends Button {
     @Override
     protected void renderWidget(@NotNull GuiGraphics g, int mouseX, int mouseY, float partialTick) {
 
-        g.fill(getX(), getY(), getX()+width, getY()+height, normalColor);
+        g.fill(getX(), getY(), getX() + width, getY() + height, normalColor);
 
         if (isHovered()) {
-            g.fill(getX(), getY(), getX()+width, getY()+height, hoverColor);
+            g.fill(getX(), getY(), getX() + width, getY() + height, hoverColor);
         }
 
-        if (isFocused()) {
+        /*if (isFocused()) {
             g.renderOutline(getX(), getY(), width, height, 0xFFFFFFFF);
-        }
+        }*/
     }
 }
