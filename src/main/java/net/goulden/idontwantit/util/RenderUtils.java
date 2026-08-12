@@ -1,5 +1,9 @@
 package net.goulden.idontwantit.util;
 
+import net.minecraft.client.gui.GuiGraphics;
+
+import static net.goulden.idontwantit.util.GUIVariables.*;
+
 public final class RenderUtils {
 
     private RenderUtils() {}
@@ -32,4 +36,10 @@ public final class RenderUtils {
         }
     }
 
+    public static void renderCustomOutline(GuiGraphics g, int x, int y, int width, int height, int color) {
+        g.fill(x, y, x + width, y + spaceBetweenButtons, color);
+        g.fill(x, y + height - spaceBetweenButtons, x + width, y + height, color);
+        g.fill(x, y + spaceBetweenButtons, x + spaceBetweenButtons, y + height - spaceBetweenButtons, color);
+        g.fill(x + width - spaceBetweenButtons, y + spaceBetweenButtons, x + width, y + height - spaceBetweenButtons, color);
+    }
 }

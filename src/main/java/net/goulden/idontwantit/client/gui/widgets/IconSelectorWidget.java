@@ -14,6 +14,8 @@ import net.minecraft.world.item.Items;
 import java.util.ArrayList;
 import java.util.List;
 
+import static net.goulden.idontwantit.util.GUIVariables.*;
+
 public class IconSelectorWidget {
     private final Runnable onClose;
     private final String profileName;
@@ -21,8 +23,8 @@ public class IconSelectorWidget {
     private final int screenWidth;
     private final int screenHeight;
 
-    private final int widgetX;
-    private final int widgetY;
+    private final int widgetX = spacedX + 20;
+    private final int widgetY = spacedY + customHeight + spaceBetweenButtons;
     private final int widgetWidth = 200;
     private final int widgetHeight = 250;
 
@@ -30,16 +32,12 @@ public class IconSelectorWidget {
     private IconGridWidget iconGrid;
     private String currentFilter = "";
 
-    public IconSelectorWidget(Runnable onClose, String profileName, int mouseX, int mouseY) {
+    public IconSelectorWidget(Runnable onClose, String profileName) {
         this.onClose = onClose;
         this.profileName = profileName;
         this.minecraft = Minecraft.getInstance();
         this.screenWidth = minecraft.getWindow().getGuiScaledWidth();
         this.screenHeight = minecraft.getWindow().getGuiScaledHeight();
-
-        // Posicionar cerca del click pero asegurarse de que esté en pantalla
-        this.widgetX = Math.min(mouseX, screenWidth - widgetWidth - 10);
-        this.widgetY = Math.min(mouseY, screenHeight - widgetHeight - 10);
 
         init();
     }

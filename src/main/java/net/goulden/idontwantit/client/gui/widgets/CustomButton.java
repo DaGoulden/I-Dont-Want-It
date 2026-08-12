@@ -5,34 +5,37 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
+import static net.goulden.idontwantit.util.GUIVariables.hoveredAdditiveColor;
+import static net.goulden.idontwantit.util.GUIVariables.recalculate;
+
 public class CustomButton extends Button {
 
-    private final int normalColor;
-    private final int hoverColor;
+    public int usedColor;
+    public boolean hoverable = true;
 
-    public CustomButton(int x, int y, int w, int h, OnPress onPress, int normalColor, int hoverColor) {
+    public CustomButton(int x, int y, int w, int h, OnPress onPress, int usedColor) {
         super(x, y, w, h, Component.empty(), onPress, DEFAULT_NARRATION);
-        this.normalColor = normalColor;
-        this.hoverColor = hoverColor;
+        this.usedColor = usedColor;
     }
 
-    public CustomButton(OnPress onPress, int normalColor, int hoverColor) {
+    public CustomButton(OnPress onPress, int usedColor) {
         super(0, 0, 0, 0, Component.empty(), onPress, DEFAULT_NARRATION);
-        this.normalColor = normalColor;
-        this.hoverColor = hoverColor;
+        this.usedColor = usedColor;
     }
 
     @Override
     protected void renderWidget(@NotNull GuiGraphics g, int mouseX, int mouseY, float partialTick) {
 
-        g.fill(getX(), getY(), getX() + width, getY() + height, normalColor);
+        recalculate(width, height);
 
-        if (isHovered()) {
-            g.fill(getX(), getY(), getX() + width, getY() + height, hoverColor);
+        g.fill(getX(), getY(), getX() + width, getY() + height, usedColor);
+
+        if (isHovered() && hoverable) {
+            g.fill(getX(), getY(), getX() + width, getY() + height, hoveredAdditiveColor);
         }
 
-        /*if (isFocused()) {
-            g.renderOutline(getX(), getY(), width, height, 0xFFFFFFFF);
-        }*/
+//        if (isFocused()) {
+//            g.renderOutline(getX(), getY(), width, height, 0xFFFFFFFF);
+//        }
     }
 }

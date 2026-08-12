@@ -1,6 +1,5 @@
 package net.goulden.idontwantit.client.gui.widgets;
 
-import net.goulden.idontwantit.client.gui.EditProfileItemsScreen;
 import net.goulden.idontwantit.profile.ProfileManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -15,14 +14,16 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class AddItemWidget {
-    private final EditProfileItemsScreen parent;
     private final String profileName;
     private final Minecraft minecraft;
     private final int width;
     private final int height;
+
+    Runnable onClose;
 
     private final int widgetX;
     private final int widgetY;
@@ -34,8 +35,8 @@ public class AddItemWidget {
     private Button closeButton;
     private String currentFilter = "";
 
-    public AddItemWidget(EditProfileItemsScreen parent, String profileName) {
-        this.parent = parent;
+    public AddItemWidget(Runnable onClose, String profileName) {
+        this.onClose = onClose;
         this.profileName = profileName;
         this.minecraft = Minecraft.getInstance();
         this.width = minecraft.getWindow().getGuiScaledWidth();
@@ -79,10 +80,10 @@ public class AddItemWidget {
         );
 
         // Botón cerrar
-        /*this.closeButton = Button.builder(
+        this.closeButton = Button.builder(
                 Component.literal("Cerrar"),
-                button -> parent.closeAddItemWidget()
-        ).bounds(widgetX + widgetWidth / 2 - 50, widgetY + widgetHeight - 30, 100, 20).build();*/
+                button -> {onClose.run();}
+        ).bounds(widgetX + widgetWidth / 2 - 50, widgetY + widgetHeight - 30, 100, 20).build();
     }
 
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
@@ -147,7 +148,7 @@ public class AddItemWidget {
         }
 
         // Click fuera del widget = cerrar
-        //parent.closeAddItemWidget();
+        onClose.run();
         return true;
     }
 
@@ -163,7 +164,7 @@ public class AddItemWidget {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         // ESC para cerrar
         if (keyCode == 256) { // GLFW_KEY_ESCAPE
-            //parent.closeAddItemWidget();
+            onClose.run();
             return true;
         }
 
@@ -227,9 +228,7 @@ public class AddItemWidget {
             }
 
             // Ordenar por nombre
-            availableItems.sort((a, b) ->
-                    a.getDescription().getString().compareTo(b.getDescription().getString())
-            );
+            availableItems.sort(Comparator.comparing(a -> a.getDescription().getString()));
 
             for (Item item : availableItems) {
                 this.addEntry(new ItemEntry(item));

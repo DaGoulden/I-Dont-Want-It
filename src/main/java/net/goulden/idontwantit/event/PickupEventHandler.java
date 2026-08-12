@@ -46,7 +46,7 @@ public class PickupEventHandler {
     @SubscribeEvent
     public static void onItemPickup(ItemEntityPickupEvent.Pre event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null && !event.getPlayer().getUUID().equals(mc.player.getUUID())) return;
+        if (mc.player == null || !event.getPlayer().getUUID().equals(mc.player.getUUID())) return;
 
         if (overridePickupFilter) return;
 

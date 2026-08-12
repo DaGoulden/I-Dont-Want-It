@@ -1,10 +1,11 @@
 package net.goulden.idontwantit.client.gui;
 
 import net.goulden.idontwantit.client.gui.widgets.CustomButton;
+import net.goulden.idontwantit.client.gui.widgets.CustomList;
 import net.goulden.idontwantit.profile.ProfileManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.*;
+import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.goulden.idontwantit.util.ScreenVariables.*;
+import static net.goulden.idontwantit.util.GUIVariables.*;
 import static net.goulden.idontwantit.util.RenderUtils.*;
 
 public class MainScreen extends Screen {
@@ -29,44 +30,38 @@ public class MainScreen extends Screen {
         return false;
     }
 
-    int stateButtonDuration = 10;
-    int deleteConfirmationDuration = 30;
-
     ProfileListWidget profilesList;
-    private Button settingsButton;
-    private Button whitelistButton;
-    private Button closeButton;
+    private CustomButton settingsButton;
+    private CustomButton whitelistButton;
+    private CustomButton closeButton;
 
-// ================= INIT =================
     @Override
     protected void init() {
         super.init();
 
-        customHeight = font.lineHeight + spacedText * 2;
-        spacedX = width / 4;
-        spacedY = height / 10;
-        firstLineEndInY = spacedY + customHeight;
-        secondLineStartInY = spacedY * 9 - customHeight;
-        int settingsButtonX = spacedX * 3 - customHeight;
+        recalculate(width, height, font.lineHeight);
+
+        int settingsButtonX = width - spacedX - customHeight;
         int whitelistButtonWidth = font.width("Modo Whitelist") + spacedText + customHeight;
 
 // LIST OF PROFILES
         profilesList = new ProfileListWidget(
                 minecraft,
-                width,
-                (height - (firstLineEndInY + spaceBetweenButtons)) - (height - (secondLineStartInY - spaceBetweenButtons)),
+                spacedX + customHeight + spaceBetweenButtons,
                 firstLineEndInY + spaceBetweenButtons,
-                0);
+                width - spacedX * 2 - (customHeight + spaceBetweenButtons) * 2,
+                (height - (firstLineEndInY + spaceBetweenButtons)) - (height - (secondLineStartInY - spaceBetweenButtons)),
+                spacedText * 2 + font.lineHeight * 2 + 2);
         addRenderableWidget(profilesList);
 
 // CLOSE BUTTON
         closeButton = new CustomButton(
                 spacedX,
                 secondLineStartInY,
-                spacedX * 2 - customHeight - whitelistButtonWidth - spaceBetweenButtons * 2,
+                width - spacedX * 2 - customHeight - whitelistButtonWidth - spaceBetweenButtons * 2,
                 customHeight,
                 b -> onClose(),
-                primaryColor, hoveredAdditiveColor);
+                primaryColor);
         addRenderableWidget(closeButton);
 
 // WHITELIST MODE BUTTON
@@ -76,7 +71,7 @@ public class MainScreen extends Screen {
                 whitelistButtonWidth,
                 customHeight,
                 b -> ProfileManager.toggleWhitelistMode(),
-                primaryColor, hoveredAdditiveColor);
+                primaryColor);
         addRenderableWidget(whitelistButton);
 
 // SETTINGS BUTTON
@@ -86,7 +81,7 @@ public class MainScreen extends Screen {
                 customHeight,
                 customHeight,
                 b -> {},
-                primaryColor, hoveredAdditiveColor);
+                primaryColor);
         addRenderableWidget(settingsButton);
     }
 
@@ -94,14 +89,16 @@ public class MainScreen extends Screen {
     public void render(@NotNull GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
 
+        recalculate(width, height, font.lineHeight);
+
         int activeCount = ProfileManager.getActiveProfileCount();
         int totalCount = ProfileManager.getAllProfiles().size();
         String activeCountText = activeCount + (activeCount == 1 ? " activo de " : " activos de ") + totalCount;
 
 // SCREEN NAME
-        g.fill( spacedX,
+        g.fill(spacedX,
                 spacedY,
-                spacedX * 3 - font.width(activeCountText) - spacedText * 2 - spaceBetweenButtons,
+                width - spacedX - font.width(activeCountText) - spacedText * 2 - spaceBetweenButtons,
                 firstLineEndInY,
                 primaryColor);
         g.drawString(font,
@@ -111,24 +108,28 @@ public class MainScreen extends Screen {
                 linesColor);
 
 // ACTIVE COUNT
-        g.fill( spacedX * 3 - font.width(activeCountText) - spacedText * 2,
+        g.fill(width - spacedX - font.width(activeCountText) - spacedText * 2,
                 spacedY,
-                spacedX * 3,
+                width - spacedX,
                 firstLineEndInY,
                 primaryColor);
         g.drawString(font,
                 activeCountText,
-                spacedX * 3 - font.width(activeCountText) - spacedText,
+                width - spacedX - font.width(activeCountText) - spacedText,
                 spacedY + spacedText,
-                (0xBB << 24) | linesColor);
+                linesColor | (0xBB << 24));
 
-// SETTINGS BUTTON
-        // textura de settings
+// CLOSE BUTTON
+        g.drawCenteredString(font,
+                "Cerrar",
+                closeButton.getX() + closeButton.getWidth() / 2,
+                closeButton.getY() + spacedText,
+                linesColor);
 
 // WHITELIST MODE BUTTON
-        int squareSize = customHeight - spacedText * 2;
-        int checkboxX = spacedX * 3 - customHeight - spaceBetweenButtons - spacedText - squareSize;
-        int checkboxY = secondLineStartInY + spacedText;
+        int checkboxSize = customHeight - spacedText * 2;
+        int checkboxX = whitelistButton.getX() + whitelistButton.getWidth() - spacedText - checkboxSize;
+        int checkboxY = whitelistButton.getY() + spacedText;
         g.drawString(font,
                 "Modo Whitelist",
                 whitelistButton.getX() + spacedText,
@@ -137,42 +138,43 @@ public class MainScreen extends Screen {
         g.renderOutline(
                 checkboxX,
                 checkboxY,
-                squareSize,
-                squareSize,
-                (0xFF << 24) | linesColor);
-        if (ProfileManager.isWhitelistMode()) {
-            g.fill( checkboxX + 2,
-                    checkboxY + 2,
-                    checkboxX + 2 + (squareSize - 4),
-                    checkboxY + 2 + (squareSize - 4),
-                    goodMeaningColor);
-        }
+                checkboxSize,
+                checkboxSize,
+                linesColor | (0xFF << 24));
+        g.fill(checkboxX + 2,
+                checkboxY + 2,
+                checkboxX + 2 + (checkboxSize - 4),
+                checkboxY + 2 + (checkboxSize - 4),
+                ProfileManager.isWhitelistMode() ? goodMeaningColor : badMeaningColor);
 
-// CLOSE BUTTON
-        g.drawCenteredString(font,
-                "Cerrar",
-                closeButton.getX() + closeButton.getWidth() / 2,
-                closeButton.getY() + spacedText,
-                linesColor);
+// SETTINGS BUTTON
+        // textura de settings
     }
 
-// ================= CUSTOM LIST ====================
-    private class ProfileListWidget extends ContainerObjectSelectionList<ProfileListWidget.EntryBase> {
+    @Override
+    public void tick() {
+        for (var entry : profilesList.children()) {
+            if (entry instanceof ProfileListWidget.ProfileEntry profileEntry) {
+                profileEntry.tick();
+            }
+        }
+    }
 
-        public ProfileListWidget(Minecraft mc, int width, int height, int y, int x) {
-            super(mc, width, height, y, 32);
-            setX(x);
+// - - - PROFILE LIST - - -
+    private class ProfileListWidget extends CustomList<ProfileListWidget.EntryBase> {
+
+        public ProfileListWidget(Minecraft mc, int x, int y, int width, int height, int itemHeight) {
+            super(mc, width, height, y, x, itemHeight);
             refreshList();
         }
 
         abstract static class EntryBase extends ContainerObjectSelectionList.Entry<EntryBase> {}
 
-// ================= PROFILE ENTRY =================
         class ProfileEntry extends EntryBase {
 
-            private final Button stateButton;
-            private final Button nameButton;
-            private final Button deleteButton;
+            private final CustomButton stateButton;
+            private final CustomButton nameButton;
+            private final CustomButton deleteButton;
 
             final String profileName;
 
@@ -188,34 +190,34 @@ public class MainScreen extends Screen {
 // STATE BUTTON
                 stateButton = new CustomButton(
                         b -> ProfileManager.toggleProfileState(profileName),
-                        secondaryColor, hoveredAdditiveColor);
+                        secondaryColor);
 
-// NAME BUTTON
+// PROFILE BUTTON
                 nameButton = new CustomButton(
-                        b -> minecraft.setScreen(new EditProfileItemsScreen(MainScreen.this, profileName)),
-                        secondaryColor, hoveredAdditiveColor);
+                        b -> minecraft.setScreen(new EditProfileScreen(MainScreen.this, profileName)),
+                        secondaryColor);
 
 // DELETE BUTTON
                 deleteButton = new CustomButton(
                         b -> {
-                            if (deleteConfirmationElapsed <= deleteConfirmationDuration) {
+                            if (deleteConfirmationElapsed < deleteConfirmationDuration) {
                                 ProfileManager.deleteProfile(profileName);
                                 refreshList();
                             }
                             deleteConfirmationElapsed = 0;
                         },
-                        secondaryColor, hoveredAdditiveColor);
+                        secondaryColor);
             }
 
             @Override
             public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hover, float partialTick) {
 
 // STATE BUTTON
-                stateButton.setPosition(left, top);
+                stateButton.setPosition(left + width - height * 2 - spaceBetweenButtons, top);
                 stateButton.setSize(height, height);
                 stateButton.render(g, mouseX, mouseY, partialTick);
                 int stateBoxWidth = stateButton.getWidth() / 2;
-                int stateBoxHeight = stateButton.getHeight() / 3;
+                int stateBoxHeight = stateButton.getHeight() / 4;
                 int stateBoxX = stateButton.getX() + stateButton.getWidth() / 2 - stateBoxWidth / 2;
                 int stateBoxY = stateButton.getY() + stateButton.getHeight() / 2 - stateBoxHeight / 2;
                 g.renderOutline(
@@ -223,36 +225,35 @@ public class MainScreen extends Screen {
                         stateBoxY,
                         stateBoxWidth,
                         stateBoxHeight,
-                        (0xFF << 24) | linesColor);
+                        linesColor | (0xFF << 24));
                 float stateProgress = easeInOutCubic((float) stateButtonElapsed / stateButtonDuration);
                 g.pose().pushPose();
                 g.pose().translate(stateBoxX + ((stateBoxWidth - stateBoxHeight) * stateProgress), stateBoxY, 0);
-                g.fill( 2,
+                g.fill(2,
                         2,
                         stateBoxHeight - 2,
                         stateBoxHeight - 2,
-                        lerpColor(secondaryColor, goodMeaningColor, stateProgress));
+                        lerpColor(badMeaningColor, goodMeaningColor, stateProgress));
                 g.pose().popPose();
 
-// NAME BUTTON
-                int nameButtonX = left + height + spaceBetweenButtons;
-                nameButton.setPosition(nameButtonX, top);
-                nameButton.setSize(width - height * 2 - spaceBetweenButtons * 2, height);
+// PROFILE BUTTON
+                nameButton.setPosition(left, top);
+                nameButton.setSize(width - height * 2 - spaceBetweenButtons, height);
                 nameButton.render(g, mouseX, mouseY, partialTick);
                 g.renderItem(new ItemStack(ProfileManager.getProfile(profileName).getIconItem()),
-                        nameButtonX + 4,
-                        top + (height - 16) / 2);
+                        left + (height - itemSize) / 2,
+                        top + (height - itemSize) / 2);
                 g.drawString(minecraft.font,
                         profileName,
-                        nameButtonX + 24,
-                        top + 6,
+                        left + height,
+                        top + spacedText,
                         linesColor);
                 int count = ProfileManager.getProfile(profileName).ignoredItems.size();
                 g.drawString(minecraft.font,
                         count + (count == 1 ? " item" : " items"),
-                        nameButtonX + 24,
-                        top + 16,
-                        (0xAA << 24) | linesColor);
+                        left + height + spacedText,
+                        top + spacedText + font.lineHeight + 2,
+                        linesColor | (0xAA << 24));
 
 // DELETE BUTTON
                 deleteButton.setPosition(left + width - height, top);
@@ -264,20 +265,18 @@ public class MainScreen extends Screen {
                         deleteButton.getY() + deleteButton.getHeight() / 2 - font.lineHeight / 2,
                         linesColor);
                 if (deleteConfirmationElapsed <= deleteConfirmationDuration) {
-                    float deleteProgress = easeInOutCubic((float) deleteConfirmationElapsed / deleteConfirmationDuration);
-                    int deleteAlpha = (int)((1f - deleteProgress) * 255);
-                    if (deleteAlpha > 2) {
-                        g.fill( deleteButton.getX(),
+                    float deleteProgress = (float) deleteConfirmationElapsed / deleteConfirmationDuration;
+                    int deleteAlpha = Math.max(5, (int)((1f - deleteProgress) * 255));
+                    g.fill(deleteButton.getX(),
                             deleteButton.getY(),
                             deleteButton.getX() + deleteButton.getWidth(),
                             deleteButton.getY() + deleteButton.getHeight(),
-                            (deleteAlpha << 24) | badMeaningColor);
-                        g.drawCenteredString(font,
-                                "¿\uD83D\uDDD1?",
-                                deleteButton.getX() + deleteButton.getWidth() / 2,
-                                deleteButton.getY() + deleteButton.getHeight() / 2 - font.lineHeight / 2,
-                                (deleteAlpha << 24) | linesColor);
-                    }
+                            (deleteAlpha << 24) | (badMeaningColor & 0x00FFFFFF));
+                    g.drawCenteredString(font,
+                            "¿\uD83D\uDDD1?",
+                            deleteButton.getX() + deleteButton.getWidth() / 2,
+                            deleteButton.getY() + deleteButton.getHeight() / 2 - font.lineHeight / 2,
+                            linesColor | (deleteAlpha << 24));
                 }
             }
 
@@ -306,13 +305,13 @@ public class MainScreen extends Screen {
             }
         }
 
-        // Create Entry
         class CreateProfileEntry extends EntryBase {
 
-            private final Button createProfileButton;
+            private final CustomButton createProfileButton;
 
             public CreateProfileEntry() {
 
+// CREATE PROFILE BUTTON
                 createProfileButton = new CustomButton(
                         b -> {
                             int count = 1;
@@ -326,12 +325,13 @@ public class MainScreen extends Screen {
                             ProfileManager.createProfile(name, "minecraft:paper");
                             refreshList();
                         },
-                        secondaryColor, hoveredAdditiveColor);
+                        secondaryColor);
             }
 
             @Override
             public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hover, float partialTick) {
 
+// CREATE PROFILE BUTTON
                 createProfileButton.setPosition(left, top);
                 createProfileButton.setSize(width, height);
                 createProfileButton.render(g, mouseX, mouseY, partialTick);
@@ -356,21 +356,6 @@ public class MainScreen extends Screen {
 
             for (String name : names) addEntry(new ProfileEntry(name));
             addEntry(new CreateProfileEntry());
-        }
-
-        @Override
-        protected void renderListBackground(@NotNull GuiGraphics g) {}
-
-        @Override
-        protected void renderListSeparators(@NotNull GuiGraphics g) {}
-    }
-
-    @Override
-    public void tick() {
-        for (var entry : profilesList.children()) {
-            if (entry instanceof ProfileListWidget.ProfileEntry profileEntry) {
-                profileEntry.tick();
-            }
         }
     }
 }

@@ -8,13 +8,13 @@ import org.lwjgl.glfw.GLFW;
 
 public class KeyBindings {
     public static final String KEY_CATEGORY = "key.categories.idontwantit";
-    public static final String KEY_OPEN_MENU = "key.idontwantit.open_menu";
+    public static final String KEY = "key.idontwantit.key";
 
     public static KeyMapping openMenuKey;
 
     public static void register(RegisterKeyMappingsEvent event) {
         openMenuKey = new KeyMapping(
-                KEY_OPEN_MENU,
+                KEY,
                 KeyConflictContext.IN_GAME,
                 InputConstants.Type.KEYSYM,
                 GLFW.GLFW_KEY_I,

@@ -5,7 +5,9 @@ import com.google.gson.GsonBuilder;
 import net.goulden.idontwantit.IDontWantIt;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 
@@ -14,24 +16,31 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+import static net.goulden.idontwantit.IDontWantIt.MODID;
+
 public class ProfileManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Path CONFIG_DIR = Minecraft.getInstance().gameDirectory.toPath().resolve("config/IDontWantIt");
-    private static final Path PROFILES_FILE = CONFIG_DIR.resolve("profiles.json");
+    private static final Path PROFILES_FILE = Minecraft.getInstance().gameDirectory.toPath().resolve("config/" + MODID + "-profiles.json");
 
     private static final Map<String, ItemProfile> profiles = new HashMap<>();
     private static boolean whitelistMode = false;
+
+    static {
+        loadProfiles(); // ✅ se ejecuta una sola vez, la primera vez que algo toca ProfileManager
+    }
 
     public static class ItemProfile {
         public String name;
         public String iconItemId;
         public Set<String> ignoredItems;
+        public Set<String> ignoredTags;
         public boolean isActive;
 
         public ItemProfile(String name, String iconItemId) {
             this.name = name;
             this.iconItemId = iconItemId;
             this.ignoredItems = new HashSet<>();
+            this.ignoredTags = new HashSet<>();
             this.isActive = false;
         }
 
@@ -58,13 +67,32 @@ public class ProfileManager {
     }
 
     public static void saveProfiles() {
-        try (Writer writer = Files.newBufferedWriter(PROFILES_FILE)) {
-            ProfileData data = new ProfileData();
-            data.profiles = profiles;
-            data.whitelistMode = whitelistMode;
-            GSON.toJson(data, writer);
+        try {
+            try (Writer writer = Files.newBufferedWriter(PROFILES_FILE)) {
+                ProfileData data = new ProfileData();
+                data.profiles = profiles;
+                data.whitelistMode = whitelistMode;
+                GSON.toJson(data, writer);
+            }
         } catch (IOException e) {
-            IDontWantIt.LOGGER.error("Error al guardar perfiles", e);
+            IDontWantIt.LOGGER.error("Error saving profiles", e);
+        }
+    }
+
+    public static void loadProfiles() {
+        if (!Files.exists(PROFILES_FILE)) return; // primera vez que se abre el mod, no hay nada que cargar
+
+        try (Reader reader = Files.newBufferedReader(PROFILES_FILE)) {
+            ProfileData data = GSON.fromJson(reader, ProfileData.class);
+            if (data != null) {
+                if (data.profiles != null) {
+                    profiles.clear();
+                    profiles.putAll(data.profiles);
+                }
+                whitelistMode = data.whitelistMode;
+            }
+        } catch (IOException e) {
+            IDontWantIt.LOGGER.error("Error loading profiles", e);
         }
     }
 
@@ -72,8 +100,7 @@ public class ProfileManager {
 
         ItemProfile profile = profiles.remove(oldName);
 
-        if (profile == null)
-            return;
+        if (profile == null) return;
 
         profile.name = newName;
 
@@ -143,17 +170,55 @@ public class ProfileManager {
         }
     }
 
+    public static boolean isItemIgnoredInProfile(String profileName, Item item) {
+        ItemProfile profile = profiles.get(profileName);
+        if (profile == null) return false;
+
+        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
+        return profile.ignoredItems.contains(itemId.toString());
+    }
+
+    public static void addIgnoredTag(String profileName, TagKey<Item> tag) {
+        ItemProfile profile = profiles.get(profileName);
+        if (profile != null) {
+            profile.ignoredTags.add(tag.location().toString());
+            saveProfiles();
+        }
+    }
+
+    public static void removeIgnoredTag(String profileName, TagKey<Item> tag) {
+        ItemProfile profile = profiles.get(profileName);
+        if (profile != null) {
+            profile.ignoredTags.remove(tag.location().toString());
+            saveProfiles();
+        }
+    }
+
+    public static boolean isTagIgnoredInProfile(String profileName, TagKey<Item> tag) {
+        ItemProfile profile = profiles.get(profileName);
+        if (profile == null) return false;
+        return profile.ignoredTags.contains(tag.location().toString());
+    }
+
     public static boolean isItemIgnored(Item item) {
         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
-
         String itemIdString = itemId.toString();
+
         boolean isInActiveProfiles = false;
         boolean hasActiveProfiles = false;
 
         for (ItemProfile profile : profiles.values()) {
             if (profile.isActive) {
                 hasActiveProfiles = true;
+
+                // Chequeo de item específico (igual que antes)
                 if (profile.ignoredItems.contains(itemIdString)) {
+                    isInActiveProfiles = true;
+                    break;
+                }
+
+                // ✅ Chequeo de tags
+                if (matchesAnyTag(item, profile.ignoredTags)) {
                     isInActiveProfiles = true;
                     break;
                 }
@@ -168,12 +233,18 @@ public class ProfileManager {
         }
     }
 
-    public static boolean isItemIgnoredInProfile(String profileName, Item item) {
-        ItemProfile profile = profiles.get(profileName);
-        if (profile == null) return false;
+    // ✅ Helper: chequea si el item pertenece a alguno de los tags guardados como String
+    private static boolean matchesAnyTag(Item item, Set<String> tagStrings) {
+        for (String tagString : tagStrings) {
+            ResourceLocation tagId = ResourceLocation.tryParse(tagString);
+            if (tagId == null) continue;
 
-        ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
-        return profile.ignoredItems.contains(itemId.toString());
+            TagKey<Item> tagKey = TagKey.create(Registries.ITEM, tagId);
+            if (item.builtInRegistryHolder().is(tagKey)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static boolean isWhitelistMode() {
