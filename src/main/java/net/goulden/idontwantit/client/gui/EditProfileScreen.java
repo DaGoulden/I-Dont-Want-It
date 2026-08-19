@@ -4,7 +4,6 @@ import net.goulden.idontwantit.client.gui.widgets.*;
 import net.goulden.idontwantit.profile.ProfileManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
@@ -57,8 +56,6 @@ public class EditProfileScreen extends Screen {
     private IconSelectorWidget iconSelectorWidget;
     private AddItemWidget addItemWidget;
 
-    static int cornerButtonsSize = customHeight * 2;
-
     int editBoxErrorElapsed;
     int stateButtonElapsed;
 
@@ -76,43 +73,28 @@ public class EditProfileScreen extends Screen {
 
 // ICON SELECTOR BUTTON
         iconSelectorButton = new CustomButton(
-                spacedX,
-                spacedY,
-                cornerButtonsSize,
-                cornerButtonsSize,
                 b -> iconSelectorWidget = new IconSelectorWidget(
                         () -> iconSelectorWidget = null,
-                        profileName),
-                primaryColor);
+                        profileName)
+        );
         addRenderableWidget(iconSelectorButton);
 
 // NAME EDIT BOX
-        nameEditBox = new CustomEditBox(font,
-                spacedX + cornerButtonsSize + spaceBetweenButtons,
-                spacedY,
-                width - spacedX * 2 - cornerButtonsSize * 2 - spaceBetweenButtons * 2,
-                customHeight,
-                Component.literal("Nombre del perfil"),
+        nameEditBox = new CustomEditBox(
+                font,
                 16,
-                profileName);
+                profileName
+        );
         addRenderableWidget(nameEditBox);
 
 // STATE BUTTON
         stateButton = new CustomButton(
-                width - spacedX - cornerButtonsSize,
-                spacedY,
-                cornerButtonsSize,
-                cornerButtonsSize,
-                b -> ProfileManager.toggleProfileState(profileName),
-                primaryColor);
+                b -> ProfileManager.toggleProfileState(profileName)
+        );
         addRenderableWidget(stateButton);
 
 // ITEMS TAB
         itemTabButton = new CustomButton(
-                spacedX + cornerButtonsSize + spaceBetweenButtons * 2,
-                spacedY + customHeight + spaceBetweenButtons,
-                (width - spacedX * 2 - cornerButtonsSize * 2 - spaceBetweenButtons * 2) / 2 - spaceBetweenButtons * 2,
-                customHeight,
                 b -> {
                     if (isTagListTabOpen) {
                         isTagListTabOpen = false;
@@ -121,15 +103,13 @@ public class EditProfileScreen extends Screen {
                         this.addRenderableWidget(itemListWidget);
                     }
                 },
-                secondaryColor);
+                "Items",
+                true
+        );
         addRenderableWidget(itemTabButton);
 
 // TAGS TAB
         tagTabButton = new CustomButton(
-                spacedX + cornerButtonsSize + spaceBetweenButtons + (width - spacedX * 2 - cornerButtonsSize * 2 - spaceBetweenButtons * 2) / 2 + spaceBetweenButtons,
-                spacedY + customHeight + spaceBetweenButtons,
-                (width - spacedX * 2 - cornerButtonsSize * 2 - spaceBetweenButtons * 2) / 2 - spaceBetweenButtons * 2,
-                customHeight,
                 b -> {
                     if (isItemListTabOpen) {
                         isItemListTabOpen = false;
@@ -138,36 +118,24 @@ public class EditProfileScreen extends Screen {
                         this.addRenderableWidget(tagListWidget);
                     }
                 },
-                tertiaryColor);
+                "Tags",
+                true
+        );
         addRenderableWidget(tagTabButton);
 
 // LIST OF ITEMS
-        itemListWidget = new ItemListWidget(
-                minecraft,
-                spacedX + customHeight + spaceBetweenButtons * 3,
-                spacedY + cornerButtonsSize + spaceBetweenButtons * 3,
-                width - spacedX * 2 - (customHeight + spaceBetweenButtons) * 2 - spaceBetweenButtons * 4,
-                height - spacedY * 2 - spaceBetweenButtons * 2 - cornerButtonsSize - customHeight - spaceBetweenButtons * 4,
-                itemSize + spaceBetweenButtons * 2);
+        itemListWidget = new ItemListWidget(minecraft);
         addRenderableWidget(itemListWidget);
 
 // LIST OF TAGS
-        tagListWidget = new TagListWidget(
-                minecraft,
-                spacedX + customHeight + spaceBetweenButtons * 3,
-                spacedY + cornerButtonsSize + spaceBetweenButtons * 3,
-                width - spacedX * 2 - (customHeight + spaceBetweenButtons) * 2 - spaceBetweenButtons * 4,
-                height - spacedY * 2 - spaceBetweenButtons * 2 - cornerButtonsSize - customHeight - spaceBetweenButtons * 4,
-                itemSize + spaceBetweenButtons * 2);
+        tagListWidget = new TagListWidget(minecraft);
 
 // CLOSE BUTTON
         closeButton = new CustomButton(
-                spacedX,
-                secondLineStartInY,
-                width - spacedX * 2,
-                customHeight,
                 b -> onClose(),
-                primaryColor);
+                "Aceptar",
+                true
+        );
         addRenderableWidget(closeButton);
     }
 
@@ -178,13 +146,41 @@ public class EditProfileScreen extends Screen {
         recalculate(width, height, font.lineHeight);
 
 // ICON SELECTOR BUTTON
+        iconSelectorButton.setPosition(
+                spacedX,
+                spacedY
+        );
+        iconSelectorButton.setSize(
+                cornerButtonsSize,
+                cornerButtonsSize
+        );
+        iconSelectorButton.setUsedColor(primaryColor);
         g.pose().pushPose();
-        g.pose().translate(iconSelectorButton.getX() + spacedText, iconSelectorButton.getY() + spacedText, 0);
-        g.pose().scale((cornerButtonsSize - spacedText * 2) / 16f, (cornerButtonsSize - spacedText * 2) / 16f, 1.0f);
-        g.renderItem(new ItemStack(ProfileManager.getProfile(profileName).getIconItem()), 0, 0);
+        g.pose().translate(
+                iconSelectorButton.getX() + spacedText,
+                iconSelectorButton.getY() + spacedText, 0
+        );
+        g.pose().scale(
+                (cornerButtonsSize - spacedText * 2) / 16f,
+                (cornerButtonsSize - spacedText * 2) / 16f, 1.0f
+        );
+        g.renderItem(
+                new ItemStack(ProfileManager.getProfile(profileName).getIconItem()),
+                0,
+                0
+        );
         g.pose().popPose();
 
 // NAME EDIT BOX
+        nameEditBox.setPosition(
+                spacedX + cornerButtonsSize + spaceBetweenButtons,
+                spacedY
+        );
+        nameEditBox.setSize(
+                width - spacedX * 2 - cornerButtonsSize * 2 - spaceBetweenButtons * 2,
+                customHeight
+        );
+        nameEditBox.setUsedColor(primaryColor);
         String newName = nameEditBox.getValue().trim();
         if (!nameEditBox.isFocused() && ProfileManager.getAllProfiles().containsKey(newName) && !newName.equals(profileName)) {
             editBoxErrorElapsed = 0;
@@ -196,10 +192,20 @@ public class EditProfileScreen extends Screen {
                     newName,
                     nameEditBox.getX() + spacedText,
                     nameEditBox.getY() + spacedText,
-                    (errorAlpha << 24) | (badMeaningColor & 0x00FFFFFF));
+                    (errorAlpha << 24) | (badMeaningColor & 0x00FFFFFF)
+            );
         }
 
 // STATE BUTTON
+        stateButton.setPosition(
+                width - spacedX - cornerButtonsSize,
+                spacedY
+        );
+        stateButton.setSize(
+                cornerButtonsSize,
+                cornerButtonsSize
+        );
+        stateButton.setUsedColor(primaryColor);
         int stateBoxWidth = stateButton.getWidth() / 2;
         int stateBoxHeight = stateButton.getHeight() / 3;
         int stateBoxX = stateButton.getX() + stateButton.getWidth() / 2 - stateBoxWidth / 2;
@@ -209,50 +215,47 @@ public class EditProfileScreen extends Screen {
                 stateBoxY,
                 stateBoxWidth,
                 stateBoxHeight,
-                linesColor | (0xFF << 24));
+                linesColor | (0xFF << 24)
+        );
         float stateProgress = easeInOutCubic((float) stateButtonElapsed / stateButtonDuration);
         g.pose().pushPose();
-        g.pose().translate(stateBoxX + ((stateBoxWidth - stateBoxHeight) * stateProgress), stateBoxY, 0);
+        g.pose().translate(
+                stateBoxX + ((stateBoxWidth - stateBoxHeight) * stateProgress), stateBoxY,
+                0
+        );
         g.fill(2,
                 2,
                 stateBoxHeight - 2,
                 stateBoxHeight - 2,
-                lerpColor(badMeaningColor, goodMeaningColor, stateProgress));
+                lerpColor(badMeaningColor, goodMeaningColor, stateProgress)
+        );
         g.pose().popPose();
 
 // ITEMS TAB
-        int itemsTabFontColor;
-        if (isItemListTabOpen) {
-            itemTabButton.usedColor = secondaryColor;
-            itemTabButton.hoverable = false;
-            itemsTabFontColor = linesColor;
-        } else {
-            itemTabButton.usedColor = tertiaryColor;
-            itemTabButton.hoverable = true;
-            itemsTabFontColor = linesColor | (0x99 << 24);
-        }
-        g.drawCenteredString(font,
-                "Items",
-                itemTabButton.getX() + itemTabButton.getWidth() / 2,
-                itemTabButton.getY() + spacedText,
-                itemsTabFontColor);
+        itemTabButton.setPosition(
+                spacedX + cornerButtonsSize + spaceBetweenButtons * 2,
+                spacedY + customHeight + spaceBetweenButtons
+        );
+        itemTabButton.setSize(
+                (width - spacedX * 2 - cornerButtonsSize * 2 - spaceBetweenButtons * 2) / 2 - spaceBetweenButtons * 2,
+                customHeight
+        );
+        itemTabButton.setUsedColor(isItemListTabOpen ? secondaryColor : tertiaryColor);
+        itemTabButton.setTextUsedColor(isItemListTabOpen ? linesColor : linesColor | (0x99 << 24));
+        itemTabButton.setHoverable(!isItemListTabOpen);
 
 // TAGS TAB
-        int tagsTabFontColor;
-        if (isTagListTabOpen) {
-            tagTabButton.usedColor = secondaryColor;
-            tagTabButton.hoverable = false;
-            tagsTabFontColor = linesColor;
-        } else {
-            tagTabButton.usedColor = tertiaryColor;
-            tagTabButton.hoverable = true;
-            tagsTabFontColor = linesColor | (0x99 << 24);
-        }
-        g.drawCenteredString(font,
-                "Tags",
-                tagTabButton.getX() + tagTabButton.getWidth() / 2,
-                tagTabButton.getY() + spacedText,
-                tagsTabFontColor);
+        tagTabButton.setPosition(
+                spacedX + cornerButtonsSize + spaceBetweenButtons + (width - spacedX * 2 - cornerButtonsSize * 2 - spaceBetweenButtons * 2) / 2 + spaceBetweenButtons,
+                spacedY + customHeight + spaceBetweenButtons
+        );
+        tagTabButton.setSize(
+                (width - spacedX * 2 - cornerButtonsSize * 2 - spaceBetweenButtons * 2) / 2 - spaceBetweenButtons * 2,
+                customHeight
+        );
+        tagTabButton.setUsedColor(isTagListTabOpen ? secondaryColor : tertiaryColor);
+        tagTabButton.setTextUsedColor(isTagListTabOpen ? linesColor : linesColor | (0x99 << 24));
+        tagTabButton.setHoverable(!isTagListTabOpen);
 
 // LIST BORDER
         renderCustomOutline(g,
@@ -262,12 +265,38 @@ public class EditProfileScreen extends Screen {
                 height - spacedY * 2 - spaceBetweenButtons * 2 - cornerButtonsSize - customHeight,
                 secondaryColor);
 
+// LIST OF ITEMS
+        itemListWidget.setPosition(
+                spacedX + customHeight + spaceBetweenButtons * 3,
+                spacedY + cornerButtonsSize + spaceBetweenButtons * 3
+        );
+        itemListWidget.setSize(
+                width - spacedX * 2 - (customHeight + spaceBetweenButtons) * 2 - spaceBetweenButtons * 4,
+                height - spacedY * 2 - spaceBetweenButtons * 2 - cornerButtonsSize - customHeight - spaceBetweenButtons * 4
+        );
+        itemListWidget.setItemHeight(iconSize + spaceBetweenButtons * 2);
+
+// LIST OF TAGS
+        tagListWidget.setPosition(
+                spacedX + customHeight + spaceBetweenButtons * 3,
+                spacedY + cornerButtonsSize + spaceBetweenButtons * 3
+        );
+        tagListWidget.setSize(
+                width - spacedX * 2 - (customHeight + spaceBetweenButtons) * 2 - spaceBetweenButtons * 4,
+                height - spacedY * 2 - spaceBetweenButtons * 2 - cornerButtonsSize - customHeight - spaceBetweenButtons * 4
+        );
+        tagListWidget.setItemHeight(iconSize + spaceBetweenButtons * 2);
+
 // CLOSE BUTTON
-        g.drawCenteredString(font,
-                "Aceptar",
-                closeButton.getX() + closeButton.getWidth() / 2,
-                closeButton.getY() + spacedText,
-                linesColor);
+        closeButton.setPosition(
+                spacedX,
+                secondLineStartInY
+        );
+        closeButton.setSize(
+                width - spacedX * 2,
+                customHeight
+        );
+        closeButton.setUsedColor(primaryColor);
 
         if (iconSelectorWidget != null) iconSelectorWidget.render(g, mouseX, mouseY, partialTick);
         if (addItemWidget != null) addItemWidget.render(g, mouseX, mouseY, partialTick);
@@ -348,14 +377,14 @@ public class EditProfileScreen extends Screen {
     }
 
 // - - - ITEM LIST - - -
-    public class ItemListWidget extends CustomList<EditProfileScreen.ItemListWidget.EntryBase> {
+    public class ItemListWidget extends CustomContainerList<ItemListWidget.EntryBase> {
 
-        public ItemListWidget(Minecraft mc, int x, int y, int width, int height, int itemHeight) {
-            super(mc, width, height, y, x, itemHeight);
+        public ItemListWidget(Minecraft mc) {
+            super(mc);
             refreshList();
         }
 
-        abstract static class EntryBase extends ContainerObjectSelectionList.Entry<EditProfileScreen.ItemListWidget.EntryBase> { }
+        abstract static class EntryBase extends CustomContainerList.Entry<EditProfileScreen.ItemListWidget.EntryBase> { }
 
         class ItemEntry extends EditProfileScreen.ItemListWidget.EntryBase {
 
@@ -375,30 +404,42 @@ public class EditProfileScreen extends Screen {
                             ProfileManager.removeIgnoredItem(profileName, item);
                             refreshList();
                         },
-                        secondaryColor);
+                        "x",
+                        true
+                );
             }
 
             @Override
             public void render(GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hover, float partialTick) {
 
 // REMOVE ITEM BUTTON
-                removeItemButton.setPosition(left + width - height + spaceBetweenButtons, top + spaceBetweenButtons);
-                removeItemButton.setSize(height - spaceBetweenButtons * 2, height - spaceBetweenButtons * 2);
+                removeItemButton.setPosition(
+                        left + width - height + spaceBetweenButtons,
+                        top + spaceBetweenButtons
+                );
+                removeItemButton.setSize(
+                        height - spaceBetweenButtons * 2,
+                        height - spaceBetweenButtons * 2
+                );
+                removeItemButton.setUsedColor(secondaryColor);
                 removeItemButton.render(g, mouseX, mouseY, partialTick);
                 g.fill(left,
                         top,
                         left + width,
                         top + height,
-                        secondaryColor);
+                        secondaryColor
+                );
                 g.renderItem(stack,
                         left + spaceBetweenButtons,
-                        top + spaceBetweenButtons);
+                        top + spaceBetweenButtons
+                );
                 g.drawString(
                         minecraft.font,
                         item.getDescription().getString(),
-                        left + spaceBetweenButtons * 2 + itemSize,
+                        left + spaceBetweenButtons * 2 + iconSize,
                         top + (height - font.lineHeight) / 2,
-                        0xFFFFFF);
+                        0xFFFFFF
+                );
             }
 
             @Override
@@ -426,16 +467,23 @@ public class EditProfileScreen extends Screen {
                                     profileName
                             );
                             refreshList();
-                        },
-                        secondaryColor);
+                        }
+                );
             }
 
             @Override
             public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hover, float partialTick) {
 
 // ADD ITEM BUTTON
-                addItemButton.setPosition(left, top);
-                addItemButton.setSize(width, height);
+                addItemButton.setPosition(
+                        left,
+                        top
+                );
+                addItemButton.setSize(
+                        width,
+                        height
+                );
+                addItemButton.setUsedColor(secondaryColor);
                 addItemButton.render(g, mouseX, mouseY, partialTick);
             }
 
@@ -474,14 +522,14 @@ public class EditProfileScreen extends Screen {
     }
 
     // - - - TAG LIST - - -
-    public class TagListWidget extends CustomList<EditProfileScreen.TagListWidget.EntryBase> {
+    public class TagListWidget extends CustomContainerList<TagListWidget.EntryBase> {
 
-        public TagListWidget(Minecraft mc, int x, int y, int width, int height, int itemHeight) {
-            super(mc, width, height, y, x, itemHeight);
+        public TagListWidget(Minecraft mc) {
+            super(mc);
             refreshList();
         }
 
-        abstract static class EntryBase extends ContainerObjectSelectionList.Entry<EditProfileScreen.TagListWidget.EntryBase> { }
+        abstract static class EntryBase extends CustomContainerList.Entry<EditProfileScreen.TagListWidget.EntryBase> { }
 
         class TagEntry extends EditProfileScreen.TagListWidget.EntryBase {
 
@@ -499,27 +547,38 @@ public class EditProfileScreen extends Screen {
                             ProfileManager.removeIgnoredTag(profileName, tag);
                             refreshList();
                         },
-                        secondaryColor);
+                        "x",
+                        true
+                );
             }
 
             @Override
             public void render(GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hover, float partialTick) {
 
 // REMOVE TAG BUTTON
-                removeTagButton.setPosition(left + width - height + spaceBetweenButtons, top + spaceBetweenButtons);
-                removeTagButton.setSize(height - spaceBetweenButtons * 2, height - spaceBetweenButtons * 2);
+                removeTagButton.setPosition(
+                        left + width - height + spaceBetweenButtons,
+                        top + spaceBetweenButtons
+                );
+                removeTagButton.setSize(
+                        height - spaceBetweenButtons * 2,
+                        height - spaceBetweenButtons * 2
+                );
+                removeTagButton.setUsedColor(secondaryColor);
                 removeTagButton.render(g, mouseX, mouseY, partialTick);
                 g.fill(left,
                         top,
                         left + width,
                         top + height,
-                        secondaryColor);
+                        secondaryColor
+                );
                 g.drawString(
                         minecraft.font,
                         tag.toString(),
-                        left + spaceBetweenButtons * 2 + itemSize,
+                        left + spaceBetweenButtons * 2 + iconSize,
                         top + (height - font.lineHeight) / 2,
-                        0xFFFFFF);
+                        0xFFFFFF
+                );
             }
 
             @Override
@@ -543,16 +602,23 @@ public class EditProfileScreen extends Screen {
                 addTagButton = new CustomButton(
                         b -> {
                             refreshList();
-                        },
-                        secondaryColor);
+                        }
+                );
             }
 
             @Override
             public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hover, float partialTick) {
 
 // ADD TAG BUTTON
-                addTagButton.setPosition(left, top);
-                addTagButton.setSize(width, height);
+                addTagButton.setPosition(
+                        left,
+                        top
+                );
+                addTagButton.setSize(
+                        width,
+                        height
+                );
+                addTagButton.setUsedColor(secondaryColor);
                 addTagButton.render(g, mouseX, mouseY, partialTick);
             }
 

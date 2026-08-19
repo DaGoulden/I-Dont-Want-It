@@ -1,10 +1,6 @@
 package net.goulden.idontwantit.util;
 
-import net.goulden.idontwantit.config.ConfigBuilder;
-
 public final class GUIVariables {
-
-    private GUIVariables() {}
 
     // Colors
     public static int primaryColor;
@@ -24,8 +20,9 @@ public final class GUIVariables {
     public static int customHeight;
     public static int firstLineEndInY;
     public static int secondLineStartInY;
-    public static int scrollBarWidth = 6; // Do not change
-    public static int itemSize = 16; // Do not change
+    public static int cornerButtonsSize;
+    public static int scrollbarWidth = 6; // Do not change
+    public static int iconSize = 16; // Do not change
 
     // Durations
     public static int stateButtonDuration;
@@ -37,11 +34,7 @@ public final class GUIVariables {
         customHeight = fontHeight + spacedText * 2;
         firstLineEndInY = spacedY + customHeight;
         secondLineStartInY = screenHeight - spacedY - customHeight;
+        cornerButtonsSize = customHeight * 2;
     }
 
-    public static void recalculate (int screenWidth, int screenHeight) {
-        customHeight = fontHeight + spacedText * 2;
-        firstLineEndInY = spacedY + customHeight;
-        secondLineStartInY = screenHeight - spacedY - customHeight;
-    }
 }

@@ -12,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import static net.goulden.idontwantit.util.GUIVariables.*;
@@ -180,9 +181,7 @@ public class IconSelectorWidget {
                 }
             }
 
-            filteredItems.sort((a, b) ->
-                    a.getDescription().getString().compareTo(b.getDescription().getString())
-            );
+            filteredItems.sort(Comparator.comparing(a -> a.getDescription().getString()));
 
             int rows = (int) Math.ceil((double) filteredItems.size() / itemsPerRow);
             int visibleRows = height / itemSize;

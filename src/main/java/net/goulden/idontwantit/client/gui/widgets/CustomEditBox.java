@@ -10,17 +10,19 @@ import static net.goulden.idontwantit.util.GUIVariables.*;
 
 public class CustomEditBox extends EditBox {
 
-    public CustomEditBox(Font font, int x, int y, int width, int height, Component component, int maxLength, String defaultText) {
-        super(font, x, y, width, height, component);
+    protected int usedColor;
+
+    public CustomEditBox(Font font, int maxLength, String defaultText) {
+        super(font, 0, 0, 0, 0, Component.empty());
+        this.setBordered(false);
         this.setMaxLength(maxLength);
         this.setValue(defaultText);
-        this.setBordered(false);
     }
 
     @Override
     public void renderWidget(@NotNull GuiGraphics g, int mouseX, int mouseY, float partialTick) {
 
-        g.fill(getX(), getY(), getX() + width, getY() + height, primaryColor);
+        g.fill(getX(), getY(), getX() + width, getY() + height, usedColor);
 
         if (isHovered()) {
             g.fill(getX(), getY(), getX() + width, getY() + height, hoveredAdditiveColor);
@@ -36,6 +38,10 @@ public class CustomEditBox extends EditBox {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         return super.mouseClicked(mouseX - spacedText, mouseY, button);
+    }
+
+    public void setUsedColor(int usedColor) {
+        this.usedColor = usedColor;
     }
 
 }

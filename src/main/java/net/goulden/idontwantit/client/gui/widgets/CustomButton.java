@@ -1,32 +1,33 @@
 package net.goulden.idontwantit.client.gui.widgets;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
-import static net.goulden.idontwantit.util.GUIVariables.hoveredAdditiveColor;
-import static net.goulden.idontwantit.util.GUIVariables.recalculate;
+import static net.goulden.idontwantit.util.GUIVariables.*;
 
 public class CustomButton extends Button {
 
-    public int usedColor;
-    public boolean hoverable = true;
+    protected int usedColor;
+    protected String text;
+    protected boolean isTextCentered;
+    protected int usedTextColor = linesColor;
+    protected boolean hoverable = true;
 
-    public CustomButton(int x, int y, int w, int h, OnPress onPress, int usedColor) {
-        super(x, y, w, h, Component.empty(), onPress, DEFAULT_NARRATION);
-        this.usedColor = usedColor;
+    public CustomButton(OnPress onPress, String text, boolean isTextCentered) {
+        super(0, 0, 0, 0, Component.empty(), onPress, DEFAULT_NARRATION);
+        this.text = text;
+        this.isTextCentered = isTextCentered;
     }
 
-    public CustomButton(OnPress onPress, int usedColor) {
+    public CustomButton(OnPress onPress) {
         super(0, 0, 0, 0, Component.empty(), onPress, DEFAULT_NARRATION);
-        this.usedColor = usedColor;
     }
 
     @Override
     protected void renderWidget(@NotNull GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-
-        recalculate(width, height);
 
         g.fill(getX(), getY(), getX() + width, getY() + height, usedColor);
 
@@ -37,5 +38,41 @@ public class CustomButton extends Button {
 //        if (isFocused()) {
 //            g.renderOutline(getX(), getY(), width, height, 0xFFFFFFFF);
 //        }
+
+        if (text != null) {
+            if (isTextCentered) {
+                g.drawCenteredString(
+                        Minecraft.getInstance().font,
+                        text,
+                        getX() + width / 2,
+                        getY() + spacedText,
+                        usedTextColor
+                );
+            } else {
+                g.drawString(
+                        Minecraft.getInstance().font,
+                        text,
+                        getX() + spacedText,
+                        getY() + spacedText,
+                        usedTextColor
+                );
+            }
+        }
+    }
+
+    public void setUsedColor(int usedColor) {
+        this.usedColor = usedColor;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setTextUsedColor(int usedTextColor) {
+        this.usedTextColor = usedTextColor;
+    }
+
+    public void setHoverable(boolean hoverable) {
+        this.hoverable = hoverable;
     }
 }
