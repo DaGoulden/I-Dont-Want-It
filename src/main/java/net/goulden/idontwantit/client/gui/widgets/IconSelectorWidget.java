@@ -251,7 +251,7 @@ public class IconSelectorWidget {
                         if (itemId != null) {
                             ProfileManager.ItemProfile profile = ProfileManager.getProfile(profileName);
                             if (profile != null) {
-                                profile.iconItemId = itemId.toString();
+                                profile.icon = itemId.toString();
                                 ProfileManager.saveProfiles();
                                 onClose.run();
                             }

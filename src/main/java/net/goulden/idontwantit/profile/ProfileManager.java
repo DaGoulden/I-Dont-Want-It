@@ -22,7 +22,7 @@ public class ProfileManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path PROFILES_FILE = Minecraft.getInstance().gameDirectory.toPath().resolve("config/" + MODID + "-profiles.json");
 
-    private static final Map<String, ItemProfile> profiles = new HashMap<>();
+    private static final LinkedHashMap<String, ItemProfile> profiles = new LinkedHashMap<>();
     private static boolean whitelistMode = false;
 
     static {
@@ -31,24 +31,24 @@ public class ProfileManager {
 
     public static class ItemProfile {
         public String name;
-        public String iconItemId;
+        public String icon;
         public Set<String> ignoredItems;
         public Set<String> ignoredTags;
         public boolean isActive;
 
-        public ItemProfile(String name, String iconItemId) {
+        public ItemProfile(String name, String icon) {
             this.name = name;
-            this.iconItemId = iconItemId;
+            this.icon = icon;
             this.ignoredItems = new HashSet<>();
             this.ignoredTags = new HashSet<>();
             this.isActive = false;
         }
 
         public Item getIconItem() {
-            if (iconItemId == null || iconItemId.isEmpty()) {
+            if (icon == null || icon.isEmpty()) {
                 return Items.PAPER;
             }
-            ResourceLocation id = ResourceLocation.tryParse(iconItemId);
+            ResourceLocation id = ResourceLocation.tryParse(icon);
             if (id == null) {
                 return Items.PAPER;
             }
@@ -57,11 +57,11 @@ public class ProfileManager {
     }
 
     public static class ProfileData {
-        public Map<String, ItemProfile> profiles;
+        public LinkedHashMap<String, ItemProfile> profiles;
         public boolean whitelistMode;
 
         public ProfileData() {
-            this.profiles = new HashMap<>();
+            this.profiles = new LinkedHashMap<>();
             this.whitelistMode = false;
         }
     }
@@ -253,6 +253,34 @@ public class ProfileManager {
 
     public static void toggleWhitelistMode() {
         whitelistMode = !whitelistMode;
+        saveProfiles();
+    }
+
+    public static void moveProfileUp(String name) {
+        List<String> keys = new ArrayList<>(profiles.keySet());
+        int index = keys.indexOf(name);
+        if (index <= 0) return; // ya es el primero, o no existe
+
+        Collections.swap(keys, index, index - 1);
+        reorderProfiles(keys);
+    }
+
+    public static void moveProfileDown(String name) {
+        List<String> keys = new ArrayList<>(profiles.keySet());
+        int index = keys.indexOf(name);
+        if (index < 0 || index >= keys.size() - 1) return; // ya es el último, o no existe
+
+        Collections.swap(keys, index, index + 1);
+        reorderProfiles(keys);
+    }
+
+    private static void reorderProfiles(List<String> newOrder) {
+        Map<String, ItemProfile> reordered = new LinkedHashMap<>();
+        for (String key : newOrder) {
+            reordered.put(key, profiles.get(key));
+        }
+        profiles.clear();
+        profiles.putAll(reordered);
         saveProfiles();
     }
 }

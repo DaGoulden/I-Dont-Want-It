@@ -13,7 +13,7 @@ public class CustomEditBox extends EditBox {
     protected int usedColor;
 
     public CustomEditBox(Font font, int maxLength, String defaultText) {
-        super(font, 0, 0, 0, 0, Component.empty());
+        super(font, 0, 0, 0, 0, Component.literal("Hola") /*Component.empty()*/);
         this.setBordered(false);
         this.setMaxLength(maxLength);
         this.setValue(defaultText);
@@ -28,6 +28,8 @@ public class CustomEditBox extends EditBox {
             g.fill(getX(), getY(), getX() + width, getY() + height, hoveredAdditiveColor);
         }
 
+        this.setTextColor(linesColor);
+
         g.pose().pushPose();
         g.pose().translate(spacedText, spacedText, 0);
         super.renderWidget(g, mouseX, mouseY, partialTick);
@@ -37,7 +39,7 @@ public class CustomEditBox extends EditBox {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        return super.mouseClicked(mouseX - spacedText, mouseY, button);
+        return super.mouseClicked(mouseX - spacedText, mouseY - spacedText, button);
     }
 
     public void setUsedColor(int usedColor) {

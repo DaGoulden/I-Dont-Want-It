@@ -29,15 +29,31 @@ public class CustomButton extends Button {
     @Override
     protected void renderWidget(@NotNull GuiGraphics g, int mouseX, int mouseY, float partialTick) {
 
-        g.fill(getX(), getY(), getX() + width, getY() + height, usedColor);
+        g.fill(getX(),
+                getY(),
+                getX() + width,
+                getY() + height,
+                usedColor
+        );
 
         if (isHovered() && hoverable) {
-            g.fill(getX(), getY(), getX() + width, getY() + height, hoveredAdditiveColor);
+            g.fill(getX(),
+                    getY(),
+                    getX() + width,
+                    getY() + height,
+                    hoveredAdditiveColor
+            );
         }
 
-//        if (isFocused()) {
-//            g.renderOutline(getX(), getY(), width, height, 0xFFFFFFFF);
-//        }
+        if (isFocused()) {
+            g.renderOutline(
+                    getX(),
+                    getY(),
+                    width,
+                    height,
+                    linesColor
+            );
+        }
 
         if (text != null) {
             if (isTextCentered) {

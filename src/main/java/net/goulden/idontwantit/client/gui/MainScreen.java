@@ -116,7 +116,7 @@ public class MainScreen extends Screen {
                 width - spacedX * 2 - (customHeight + spaceBetweenButtons) * 2,
                 (height - (firstLineEndInY + spaceBetweenButtons)) - (height - (secondLineStartInY - spaceBetweenButtons))
         );
-        profilesList.setItemHeight(spacedText * 2 + font.lineHeight * 2 + 2);
+        profilesList.setItemHeight(spacedText * 2 + fontHeight * 2 + 2);
 
 // CLOSE BUTTON
         closeButton.setPosition(
@@ -131,7 +131,7 @@ public class MainScreen extends Screen {
 
 // WHITELIST MODE BUTTON
         whitelistButton.setPosition(
-                settingsButtonX - spaceBetweenButtons - (whitelistButtonWidth),
+                settingsButton.getX() - spaceBetweenButtons - (whitelistButtonWidth),
                 secondLineStartInY
         );
         whitelistButton.setSize(
@@ -166,6 +166,25 @@ public class MainScreen extends Screen {
                 customHeight
         );
         settingsButton.setUsedColor(primaryColor);
+        g.pose().pushPose();
+        g.pose().translate(
+                settingsButton.getX() + (float) settingsButton.getWidth() / 2,
+                settingsButton.getY() + (float) settingsButton.getHeight() / 2,
+                0
+        );
+        g.pose().scale(
+                2/*(float) (settingsButton.getWidth() - spacedText * 2) / font.width("⛭")*/,
+                2/*(float) (settingsButton.getHeight() - spacedText * 2) / font.width("⛭")*/,
+                1
+        );
+        g.drawString(font,
+                "⛭",
+                (float) -font.width("⛭") / 2,
+                (float) -fontHeight / 2,
+                linesColor,
+                true
+        );
+        g.pose().popPose();
     }
 
     @Override
@@ -189,11 +208,15 @@ public class MainScreen extends Screen {
 
         class ProfileEntry extends EntryBase {
 
+            private final CustomButton profileButton;
+            private final CustomButton moveUpButton;
+            private final CustomButton moveDownButton;
             private final CustomButton stateButton;
-            private final CustomButton nameButton;
             private final CustomButton deleteButton;
 
             final String profileName;
+
+            boolean isMouseOverProfile;
 
             int stateButtonElapsed;
             int deleteConfirmationElapsed;
@@ -204,14 +227,30 @@ public class MainScreen extends Screen {
                 stateButtonElapsed = ProfileManager.isProfileActive(profileName) ? stateButtonDuration : 0;
                 deleteConfirmationElapsed = deleteConfirmationDuration + 1;
 
+// PROFILE BUTTON
+                profileButton = new CustomButton(
+                        b -> minecraft.setScreen(new EditProfileScreen(MainScreen.this, profileName))
+                );
+
+// MOVE UP BUTTON
+                moveUpButton = new CustomButton(
+                        b -> {
+                            ProfileManager.moveProfileUp(profileName);
+                            refreshList();
+                        }
+                );
+
+// MOVE DOWN BUTTON
+                moveDownButton = new CustomButton(
+                        b -> {
+                            ProfileManager.moveProfileDown(profileName);
+                            refreshList();
+                        }
+                );
+
 // STATE BUTTON
                 stateButton = new CustomButton(
                         b -> ProfileManager.toggleProfileState(profileName)
-                );
-
-// PROFILE BUTTON
-                nameButton = new CustomButton(
-                        b -> minecraft.setScreen(new EditProfileScreen(MainScreen.this, profileName))
                 );
 
 // DELETE BUTTON
@@ -228,6 +267,100 @@ public class MainScreen extends Screen {
 
             @Override
             public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hover, float partialTick) {
+
+                List<String> allNames = new ArrayList<>(ProfileManager.getAllProfiles().keySet());
+                int myIndex = allNames.indexOf(profileName);
+                isMouseOverProfile = mouseX >= left && mouseY >= top && mouseX < left + width && mouseY < top + height;
+
+// PROFILE BUTTON
+                profileButton.setPosition(
+                        left,
+                        top
+                );
+                profileButton.setSize(
+                        isMouseOverProfile ? width - height * 2 - height / 2 - spaceBetweenButtons : width - height * 2 - spaceBetweenButtons,
+                        height
+                );
+                profileButton.setUsedColor(secondaryColor);
+                profileButton.render(g, mouseX, mouseY, partialTick);
+                g.renderItem(
+                        new ItemStack(ProfileManager.getProfile(profileName).getIconItem()),
+                        left + (height - iconSize) / 2,
+                        top + (height - iconSize) / 2
+                );
+                g.drawString(font,
+                        profileName,
+                        left + height,
+                        top + spacedText,
+                        linesColor
+                );
+                int count = ProfileManager.getProfile(profileName).ignoredItems.size();
+                g.drawString(font,
+                        count + (count == 1 ? " item" : " items"),
+                        left + height + spacedText,
+                        top + spacedText + fontHeight + 2,
+                        linesColor | (0xAA << 24)
+                );
+
+// MOVE UP BUTTON
+                moveUpButton.setPosition(
+                        left + width - height * 2 - height / 2 - spaceBetweenButtons,
+                        top
+                );
+                moveUpButton.setSize(
+                        height / 2,
+                        height / 2
+                );
+                moveUpButton.setUsedColor(secondaryColor);
+                if (isMouseOverProfile) {
+                    if (myIndex > 0) {
+                        moveUpButton.render(g, mouseX, mouseY, partialTick);
+                        g.drawString(font,
+                                "\uD83E\uDC39",
+                                (float) (moveUpButton.getX() + (double) moveUpButton.getWidth() / 2 - 2),
+                                (float) (moveUpButton.getY() + (double) moveUpButton.getHeight() / 2 - 4),
+                                linesColor,
+                                true
+                        );
+                    } else {
+                        g.fill(moveUpButton.getX(),
+                                moveUpButton.getY(),
+                                moveUpButton.getX() + moveUpButton.getWidth(),
+                                moveUpButton.getY() + moveUpButton.getHeight(),
+                                secondaryColor
+                        );
+                    }
+                }
+
+// MOVE DOWN BUTTON
+                moveDownButton.setPosition(
+                        left + width - height * 2 - height / 2 - spaceBetweenButtons,
+                        top + height / 2
+                );
+                moveDownButton.setSize(
+                        height / 2,
+                        height / 2
+                );
+                moveDownButton.setUsedColor(secondaryColor);
+                if (isMouseOverProfile) {
+                    if (myIndex < allNames.size() - 1) {
+                        moveDownButton.render(g, mouseX, mouseY, partialTick);
+                        g.drawString(font,
+                                "\uD83E\uDC3B",
+                                (float) (moveDownButton.getX() + (double) moveDownButton.getWidth() / 2 - 2),
+                                (float) (moveDownButton.getY() + (double) moveDownButton.getHeight() / 2 - 4),
+                                linesColor,
+                                true
+                        );
+                    } else {
+                        g.fill(moveDownButton.getX(),
+                                moveDownButton.getY(),
+                                moveDownButton.getX() + moveDownButton.getWidth(),
+                                moveDownButton.getY() + moveDownButton.getHeight(),
+                                secondaryColor
+                        );
+                    }
+                }
 
 // STATE BUTTON
                 stateButton.setPosition(
@@ -253,7 +386,11 @@ public class MainScreen extends Screen {
                 );
                 float stateProgress = easeInOutCubic((float) stateButtonElapsed / stateButtonDuration);
                 g.pose().pushPose();
-                g.pose().translate(stateBoxX + ((stateBoxWidth - stateBoxHeight) * stateProgress), stateBoxY, 0);
+                g.pose().translate(
+                        stateBoxX + ((stateBoxWidth - stateBoxHeight) * stateProgress),
+                        stateBoxY,
+                        0
+                );
                 g.fill(2,
                         2,
                         stateBoxHeight - 2,
@@ -261,35 +398,6 @@ public class MainScreen extends Screen {
                         lerpColor(badMeaningColor, goodMeaningColor, stateProgress)
                 );
                 g.pose().popPose();
-
-// PROFILE BUTTON
-                nameButton.setPosition(
-                        left,
-                        top
-                );
-                nameButton.setSize(
-                        width - height * 2 - spaceBetweenButtons,
-                        height
-                );
-                nameButton.setUsedColor(secondaryColor);
-                nameButton.render(g, mouseX, mouseY, partialTick);
-                g.renderItem(new ItemStack(ProfileManager.getProfile(profileName).getIconItem()),
-                        left + (height - iconSize) / 2,
-                        top + (height - iconSize) / 2
-                );
-                g.drawString(minecraft.font,
-                        profileName,
-                        left + height,
-                        top + spacedText,
-                        linesColor
-                );
-                int count = ProfileManager.getProfile(profileName).ignoredItems.size();
-                g.drawString(minecraft.font,
-                        count + (count == 1 ? " item" : " items"),
-                        left + height + spacedText,
-                        top + spacedText + font.lineHeight + 2,
-                        linesColor | (0xAA << 24)
-                );
 
 // DELETE BUTTON
                 deleteButton.setPosition(
@@ -305,7 +413,7 @@ public class MainScreen extends Screen {
                 g.drawCenteredString(font,
                         "\uD83D\uDDD1",
                         deleteButton.getX() + deleteButton.getWidth() / 2,
-                        deleteButton.getY() + deleteButton.getHeight() / 2 - font.lineHeight / 2,
+                        deleteButton.getY() + deleteButton.getHeight() / 2 - fontHeight / 2,
                         linesColor
                 );
                 if (deleteConfirmationElapsed <= deleteConfirmationDuration) {
@@ -320,7 +428,7 @@ public class MainScreen extends Screen {
                     g.drawCenteredString(font,
                             "¿\uD83D\uDDD1?",
                             deleteButton.getX() + deleteButton.getWidth() / 2,
-                            deleteButton.getY() + deleteButton.getHeight() / 2 - font.lineHeight / 2,
+                            deleteButton.getY() + deleteButton.getHeight() / 2 - fontHeight / 2,
                             linesColor | (deleteAlpha << 24)
                     );
                 }
@@ -342,12 +450,12 @@ public class MainScreen extends Screen {
 
             @Override
             public @NotNull List<? extends GuiEventListener> children() {
-                return List.of(stateButton, nameButton, deleteButton);
+                return List.of(profileButton, moveUpButton, moveDownButton, stateButton, deleteButton);
             }
 
             @Override
             public @NotNull List<? extends NarratableEntry> narratables() {
-                return List.of(stateButton, nameButton, deleteButton);
+                return List.of(profileButton, moveUpButton, moveDownButton, stateButton, deleteButton);
             }
         }
 
@@ -404,10 +512,9 @@ public class MainScreen extends Screen {
         public void refreshList() {
             clearEntries();
 
-            List<String> names = new ArrayList<>(ProfileManager.getAllProfiles().keySet());
-            names.sort(String::compareToIgnoreCase);
-
-            for (String name : names) addEntry(new ProfileEntry(name));
+            for (String name : ProfileManager.getAllProfiles().keySet()) {
+                addEntry(new ProfileEntry(name));
+            }
             addEntry(new CreateProfileEntry());
         }
     }

@@ -158,11 +158,13 @@ public class EditProfileScreen extends Screen {
         g.pose().pushPose();
         g.pose().translate(
                 iconSelectorButton.getX() + spacedText,
-                iconSelectorButton.getY() + spacedText, 0
+                iconSelectorButton.getY() + spacedText,
+                0
         );
         g.pose().scale(
                 (cornerButtonsSize - spacedText * 2) / 16f,
-                (cornerButtonsSize - spacedText * 2) / 16f, 1.0f
+                (cornerButtonsSize - spacedText * 2) / 16f,
+                1.0f
         );
         g.renderItem(
                 new ItemStack(ProfileManager.getProfile(profileName).getIconItem()),
@@ -220,7 +222,8 @@ public class EditProfileScreen extends Screen {
         float stateProgress = easeInOutCubic((float) stateButtonElapsed / stateButtonDuration);
         g.pose().pushPose();
         g.pose().translate(
-                stateBoxX + ((stateBoxWidth - stateBoxHeight) * stateProgress), stateBoxY,
+                stateBoxX + ((stateBoxWidth - stateBoxHeight) * stateProgress),
+                stateBoxY,
                 0
         );
         g.fill(2,
@@ -263,6 +266,7 @@ public class EditProfileScreen extends Screen {
                 spacedY + cornerButtonsSize + spaceBetweenButtons,
                 width - spacedX * 2 - (customHeight + spaceBetweenButtons) * 2,
                 height - spacedY * 2 - spaceBetweenButtons * 2 - cornerButtonsSize - customHeight,
+                true,
                 secondaryColor);
 
 // LIST OF ITEMS
@@ -434,10 +438,10 @@ public class EditProfileScreen extends Screen {
                         top + spaceBetweenButtons
                 );
                 g.drawString(
-                        minecraft.font,
+                        font,
                         item.getDescription().getString(),
                         left + spaceBetweenButtons * 2 + iconSize,
-                        top + (height - font.lineHeight) / 2,
+                        top + (height - fontHeight) / 2,
                         0xFFFFFF
                 );
             }
@@ -573,10 +577,10 @@ public class EditProfileScreen extends Screen {
                         secondaryColor
                 );
                 g.drawString(
-                        minecraft.font,
+                        font,
                         tag.toString(),
                         left + spaceBetweenButtons * 2 + iconSize,
-                        top + (height - font.lineHeight) / 2,
+                        top + (height - fontHeight) / 2,
                         0xFFFFFF
                 );
             }
