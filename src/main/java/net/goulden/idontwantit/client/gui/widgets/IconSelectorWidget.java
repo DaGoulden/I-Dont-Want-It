@@ -1,15 +1,18 @@
 package net.goulden.idontwantit.client.gui.widgets;
 
 import net.goulden.idontwantit.profile.ProfileManager;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractContainerWidget;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -17,12 +20,10 @@ import java.util.List;
 
 import static net.goulden.idontwantit.util.GUIVariables.*;
 
-public class IconSelectorWidget {
+public class IconSelectorWidget extends AbstractContainerWidget {
+
     private final Runnable onClose;
     private final String profileName;
-    private final Minecraft minecraft;
-    private final int screenWidth;
-    private final int screenHeight;
 
     private final int widgetX = spacedX + 20;
     private final int widgetY = spacedY + customHeight + spaceBetweenButtons;
@@ -34,36 +35,34 @@ public class IconSelectorWidget {
     private String currentFilter = "";
 
     public IconSelectorWidget(Runnable onClose, String profileName) {
+        super(spacedX + 20, spacedY + customHeight + spaceBetweenButtons, 200, 250, Component.literal("Hola"));
         this.onClose = onClose;
         this.profileName = profileName;
-        this.minecraft = Minecraft.getInstance();
-        this.screenWidth = minecraft.getWindow().getGuiScaledWidth();
-        this.screenHeight = minecraft.getWindow().getGuiScaledHeight();
 
         init();
     }
 
     private void init() {
         // Campo de búsqueda
-        this.searchBox = new EditBox(
-                minecraft.font,
+        searchBox = new EditBox(
+                font,
                 widgetX + 5,
                 widgetY + 25,
                 widgetWidth - 10,
                 20,
                 Component.literal("Buscar")
         );
-        this.searchBox.setHint(Component.literal("Buscar..."));
-        this.searchBox.setResponder(text -> {
+        searchBox.setHint(Component.literal("Buscar..."));
+        searchBox.setResponder(text -> {
             currentFilter = text.toLowerCase();
             if (iconGrid != null) {
                 iconGrid.refreshGrid();
             }
         });
-        this.searchBox.setFocused(true);
+        searchBox.setFocused(true);
 
         // Grid de iconos
-        this.iconGrid = new IconGridWidget(
+        iconGrid = new IconGridWidget(
                 widgetX + 5,
                 widgetY + 50,
                 widgetWidth - 10,
@@ -71,7 +70,8 @@ public class IconSelectorWidget {
         );
     }
 
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override
+    protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         // Elevar z-level
         graphics.pose().pushPose();
         graphics.pose().translate(0, 0, 1000);
@@ -86,13 +86,18 @@ public class IconSelectorWidget {
         graphics.fill(widgetX + widgetWidth - 2, widgetY, widgetX + widgetWidth, widgetY + widgetHeight, 0xFF00AA00);
 
         // Título
-        graphics.drawString(minecraft.font, "Seleccionar Icono", widgetX + 5, widgetY + 10, 0xFFFFFF);
+        graphics.drawString(font, "Seleccionar Icono", widgetX + 5, widgetY + 10, 0xFFFFFF);
 
         // Componentes
         searchBox.render(graphics, mouseX, mouseY, partialTick);
         iconGrid.render(graphics, mouseX, mouseY, partialTick);
 
         graphics.pose().popPose();
+    }
+
+    @Override
+    public @NotNull List<? extends GuiEventListener> children() {
+        return List.of(searchBox);
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -119,6 +124,11 @@ public class IconSelectorWidget {
         return true;
     }
 
+    @Override
+    protected void updateWidgetNarration(@NotNull NarrationElementOutput narrationElementOutput) {
+
+    }
+
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (mouseX >= widgetX && mouseX <= widgetX + widgetWidth &&
                 mouseY >= widgetY && mouseY <= widgetY + widgetHeight) {
@@ -141,10 +151,7 @@ public class IconSelectorWidget {
     }
 
     public boolean charTyped(char codePoint, int modifiers) {
-        if (searchBox.isFocused() && searchBox.charTyped(codePoint, modifiers)) {
-            return true;
-        }
-        return false;
+        return searchBox.isFocused() && searchBox.charTyped(codePoint, modifiers);
     }
 
     private class IconGridWidget {
@@ -172,7 +179,7 @@ public class IconSelectorWidget {
 
                 String itemName = item.getDescription().getString().toLowerCase();
                 ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(item);
-                String idString = itemId != null ? itemId.toString().toLowerCase() : "";
+                String idString = itemId.toString().toLowerCase();
 
                 if (currentFilter.isEmpty() ||
                         itemName.contains(currentFilter) ||
@@ -219,7 +226,7 @@ public class IconSelectorWidget {
                     graphics.renderItem(stack, itemX, itemY);
 
                     if (isHovered) {
-                        graphics.renderTooltip(minecraft.font, item.getDescription(), (int) mouseX, (int) mouseY);
+                        graphics.renderTooltip(font, item.getDescription(), (int) mouseX, (int) mouseY);
                     }
                 }
             }
@@ -248,13 +255,11 @@ public class IconSelectorWidget {
                             mouseY >= itemY && mouseY < itemY + 16) {
                         Item selectedItem = filteredItems.get(index);
                         ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(selectedItem);
-                        if (itemId != null) {
-                            ProfileManager.ItemProfile profile = ProfileManager.getProfile(profileName);
-                            if (profile != null) {
-                                profile.icon = itemId.toString();
-                                ProfileManager.saveProfiles();
-                                onClose.run();
-                            }
+                        ProfileManager.ItemProfile profile = ProfileManager.getProfile(profileName);
+                        if (profile != null) {
+                            profile.icon = itemId.toString();
+                            ProfileManager.saveProfiles();
+                            onClose.run();
                         }
                         return true;
                     }

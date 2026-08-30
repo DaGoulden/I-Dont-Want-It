@@ -37,6 +37,6 @@ public class ConfigEvent {
 
         GUIVariables.stateButtonDuration = CLIENT.stateButtonDuration.get();
         GUIVariables.deleteConfirmationDuration = CLIENT.deleteConfirmationDuration.get();
-        GUIVariables.editBoxErrorDuration = CLIENT.editBoxErrorDuration.get();
+        GUIVariables.editBoxConfirmationDuration = CLIENT.editBoxConfirmationDuration.get();
     }
 }

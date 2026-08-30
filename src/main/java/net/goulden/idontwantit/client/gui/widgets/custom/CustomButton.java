@@ -1,4 +1,4 @@
-package net.goulden.idontwantit.client.gui.widgets;
+package net.goulden.idontwantit.client.gui.widgets.custom;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -10,7 +10,7 @@ import static net.goulden.idontwantit.util.GUIVariables.*;
 
 public class CustomButton extends Button {
 
-    protected int usedColor;
+    protected int backgroundColor;
     protected String text;
     protected boolean isTextCentered;
     protected int usedTextColor = linesColor;
@@ -22,8 +22,20 @@ public class CustomButton extends Button {
         this.isTextCentered = isTextCentered;
     }
 
+    public CustomButton(OnPress onPress, String text, boolean isTextCentered, int x, int y, int w, int h, int color) {
+        super(x, y, w, h, Component.empty(), onPress, DEFAULT_NARRATION);
+        this.backgroundColor = color;
+        this.text = text;
+        this.isTextCentered = isTextCentered;
+    }
+
     public CustomButton(OnPress onPress) {
         super(0, 0, 0, 0, Component.empty(), onPress, DEFAULT_NARRATION);
+    }
+
+    public CustomButton(OnPress onPress, int x, int y, int w, int h, int color) {
+        super(x, y, w, h, Component.empty(), onPress, DEFAULT_NARRATION);
+        this.backgroundColor = color;
     }
 
     @Override
@@ -33,7 +45,7 @@ public class CustomButton extends Button {
                 getY(),
                 getX() + width,
                 getY() + height,
-                usedColor
+                backgroundColor
         );
 
         if (isHovered() && hoverable) {
@@ -76,12 +88,8 @@ public class CustomButton extends Button {
         }
     }
 
-    public void setUsedColor(int usedColor) {
-        this.usedColor = usedColor;
-    }
-
-    public String getText() {
-        return text;
+    public void setBackgroundColor(int backgroundColor) {
+        this.backgroundColor = backgroundColor;
     }
 
     public void setTextUsedColor(int usedTextColor) {

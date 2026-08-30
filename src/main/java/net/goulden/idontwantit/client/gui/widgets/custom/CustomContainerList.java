@@ -1,7 +1,6 @@
-package net.goulden.idontwantit.client.gui.widgets;
+package net.goulden.idontwantit.client.gui.widgets.custom;
 
 import com.google.common.collect.Lists;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractContainerWidget;
@@ -13,7 +12,6 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import net.minecraft.client.gui.navigation.ScreenAxis;
 import net.minecraft.client.gui.navigation.ScreenDirection;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
@@ -31,8 +29,8 @@ import static net.goulden.idontwantit.util.GUIVariables.*;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>> extends AbstractContainerWidget {
-    protected final Minecraft minecraft;
-    public int itemHeight;
+    private int itemHeight;
+    private int addMaxPosition = 0;
     private final TrackedList children = new TrackedList();
     private double scrollAmount;
     private boolean scrolling;
@@ -41,9 +39,13 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
     @Nullable
     private E hovered;
 
-    public CustomContainerList(Minecraft minecraft) {
+    public CustomContainerList() {
         super(0, 0, 0, 0, CommonComponents.EMPTY);
-        this.minecraft = minecraft;
+    }
+
+    public CustomContainerList(int x, int y, int w, int h, int itemHeight) {
+        super(x, y, w, h, CommonComponents.EMPTY);
+        this.itemHeight = itemHeight;
     }
 
     public int getRowLeft() {
@@ -59,16 +61,24 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
         return width;
     }
 
-    protected int getRowTop(int index) {
+    public int getRowTop(int index) {
         return this.getY() - (int)this.getScrollAmount() + index * (this.itemHeight + spaceBetweenButtons);
     }
 
-    protected int getRowBottom(int index) {
+    public int getRowBottom(int index) {
         return this.getRowTop(index) + this.itemHeight;
     }
 
     public void setItemHeight(int itemHeight) {
         this.itemHeight = itemHeight;
+    }
+
+    public void addToMaxPosition(int height) {
+        this.addMaxPosition = height;
+    }
+
+    public int getMaxPosition() {
+        return this.getItemCount() * (this.itemHeight + spaceBetweenButtons) - spaceBetweenButtons + this.addMaxPosition;
     }
 
     @Nullable
@@ -130,17 +140,14 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
                 : null;
     }
 
-    protected int getMaxPosition() {
-        return this.getItemCount() * (this.itemHeight + spaceBetweenButtons) - spaceBetweenButtons;
-    }
-
     @Override
     public void renderWidget(@NotNull GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        setScrollAmount(scrollAmount);
         this.hovered = this.isMouseOver(mouseX, mouseY) ? this.getEntryAtPosition(mouseX, mouseY) : null;
         this.enableScissor(g);
 
         this.renderListItems(g, mouseX, mouseY, partialTick);
-        g.disableScissor();
+
         if (this.scrollbarVisible()) {
             int scrollbarX = this.getScrollbarPosition();
             int maxScrollbarHeight = (int)((float)(this.height * this.height) / (float)this.getMaxPosition());
@@ -153,14 +160,42 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
             g.fill(scrollbarX, this.getY(), scrollbarX + scrollbarWidth, this.getY() + this.getHeight(), tertiaryColor);
             g.fill(scrollbarX, scrollbarY, scrollbarX + scrollbarWidth, scrollbarY + maxScrollbarHeight, secondaryColor);
         }
+
+        g.disableScissor();
+    }
+
+    protected void renderListItems(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        int i = this.getRowLeft();
+        int j = this.getRowWidth();
+        int k = this.itemHeight;
+        int l = this.getItemCount();
+
+        for (int i1 = 0; i1 < l; i1++) {
+            int j1 = this.getRowTop(i1);
+            int k1 = this.getRowBottom(i1);
+            if (k1 >= this.getY() && j1 <= this.getBottom()) {
+                this.renderItem(g, mouseX, mouseY, partialTick, i1, i, j1, j, k);
+            }
+        }
+    }
+
+    protected void renderItem(GuiGraphics g, int mouseX, int mouseY, float partialTick, int index, int left, int top, int width, int height) {
+        E e = this.getEntry(index);
+        e.render(g, index, top, left, width, height, mouseX, mouseY, Objects.equals(this.hovered, e), partialTick);
     }
 
     protected boolean scrollbarVisible() {
         return this.getMaxScroll() > 0;
     }
 
+    private int scissorBottom = this.getBottom();
+
+    public void setScissorBottom(int bottom) {
+        this.scissorBottom = bottom;
+    }
+
     protected void enableScissor(GuiGraphics g) {
-        g.enableScissor(this.getX(), this.getY(), this.getRight(), this.getBottom());
+        g.enableScissor(this.getX(), this.getY(), this.getRight(), scissorBottom);
     }
 
     protected void ensureVisible(E entry) {
@@ -294,30 +329,7 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
 
     @Override
     public boolean isMouseOver(double mouseX, double mouseY) {
-        return mouseY >= (double)this.getY()
-                && mouseY <= (double)this.getBottom()
-                && mouseX >= (double)this.getX()
-                && mouseX <= (double)this.getRight();
-    }
-
-    protected void renderListItems(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        int i = this.getRowLeft();
-        int j = this.getRowWidth();
-        int k = this.itemHeight;
-        int l = this.getItemCount();
-
-        for (int i1 = 0; i1 < l; i1++) {
-            int j1 = this.getRowTop(i1);
-            int k1 = this.getRowBottom(i1);
-            if (k1 >= this.getY() && j1 <= this.getBottom()) {
-                this.renderItem(g, mouseX, mouseY, partialTick, i1, i, j1, j, k);
-            }
-        }
-    }
-
-    protected void renderItem(GuiGraphics g, int mouseX, int mouseY, float partialTick, int index, int left, int top, int width, int height) {
-        E e = this.getEntry(index);
-        e.render(g, index, top, left, width, height, mouseX, mouseY, Objects.equals(this.hovered, e), partialTick);
+        return mouseY >= this.getY() && mouseY <= this.getBottom() && mouseX >= this.getX() && mouseX <= this.getRight();
     }
 
     @Nullable
@@ -396,19 +408,19 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
 
     @Override
     public void updateWidgetNarration(@NotNull NarrationElementOutput narrationElementOutput) {
-        E e = this.getHovered();
-        if (e != null) {
-            e.updateNarration(narrationElementOutput.nest());
-            this.narrateListElementPosition(narrationElementOutput, e);
-        } else {
-            E e1 = this.getFocused();
-            if (e1 != null) {
-                e1.updateNarration(narrationElementOutput.nest());
-                this.narrateListElementPosition(narrationElementOutput, e1);
-            }
-        }
-
-        narrationElementOutput.add(NarratedElementType.USAGE, Component.translatable("narration.component_list.usage"));
+//        E e = this.getHovered();
+//        if (e != null) {
+//            e.updateNarration(narrationElementOutput.nest());
+//            this.narrateListElementPosition(narrationElementOutput, e);
+//        } else {
+//            E e1 = this.getFocused();
+//            if (e1 != null) {
+//                e1.updateNarration(narrationElementOutput.nest());
+//                this.narrateListElementPosition(narrationElementOutput, e1);
+//            }
+//        }
+//
+//        narrationElementOutput.add(NarratedElementType.USAGE, Component.translatable("narration.component_list.usage"));
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -546,29 +558,29 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
             return ContainerEventHandler.super.nextFocusPath(event);
         }
 
-        public abstract List<? extends NarratableEntry> narratables();
-
-        void updateNarration(NarrationElementOutput narrationElementOutput) {
-            List<? extends NarratableEntry> list = this.narratables();
-            Screen.NarratableSearchResult screen$narratablesearchresult = Screen.findNarratableWidget(list, this.lastNarratable);
-            if (screen$narratablesearchresult != null) {
-                if (screen$narratablesearchresult.priority.isTerminal()) {
-                    this.lastNarratable = screen$narratablesearchresult.entry;
-                }
-
-                if (list.size() > 1) {
-                    narrationElementOutput.add(
-                            NarratedElementType.POSITION,
-                            Component.translatable("narrator.position.object_list", screen$narratablesearchresult.index + 1, list.size())
-                    );
-                    if (screen$narratablesearchresult.priority == NarratableEntry.NarrationPriority.FOCUSED) {
-                        narrationElementOutput.add(NarratedElementType.USAGE, Component.translatable("narration.component_list.usage"));
-                    }
-                }
-
-                screen$narratablesearchresult.entry.updateNarration(narrationElementOutput.nest());
-            }
-        }
+//        public abstract List<? extends NarratableEntry> narratables();
+//
+//        void updateNarration(NarrationElementOutput narrationElementOutput) {
+//            List<? extends NarratableEntry> list = this.narratables();
+//            Screen.NarratableSearchResult screen$narratablesearchresult = Screen.findNarratableWidget(list, this.lastNarratable);
+//            if (screen$narratablesearchresult != null) {
+//                if (screen$narratablesearchresult.priority.isTerminal()) {
+//                    this.lastNarratable = screen$narratablesearchresult.entry;
+//                }
+//
+//                if (list.size() > 1) {
+//                    narrationElementOutput.add(
+//                            NarratedElementType.POSITION,
+//                            Component.translatable("narrator.position.object_list", screen$narratablesearchresult.index + 1, list.size())
+//                    );
+//                    if (screen$narratablesearchresult.priority == NarratableEntry.NarrationPriority.FOCUSED) {
+//                        narrationElementOutput.add(NarratedElementType.USAGE, Component.translatable("narration.component_list.usage"));
+//                    }
+//                }
+//
+//                screen$narratablesearchresult.entry.updateNarration(narrationElementOutput.nest());
+//            }
+//        }
     }
 
     @OnlyIn(Dist.CLIENT)

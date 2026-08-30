@@ -1,5 +1,7 @@
 package net.goulden.idontwantit.util;
 
+import net.minecraft.client.gui.Font;
+
 public final class GUIVariables {
 
     // Colors
@@ -27,10 +29,14 @@ public final class GUIVariables {
     // Durations
     public static int stateButtonDuration;
     public static int deleteConfirmationDuration;
-    public static int editBoxErrorDuration;
+    public static int editBoxConfirmationDuration;
 
-    public static void recalculate(int screenWidth, int screenHeight, int fontLineHeight) {
-        fontHeight = fontLineHeight;
+    // Font
+    public static Font font;
+
+    public static void recalculate(int screenHeight, Font usedFont) {
+        font = usedFont;
+        fontHeight = usedFont.lineHeight;
         customHeight = fontHeight + spacedText * 2;
         firstLineEndInY = spacedY + customHeight;
         secondLineStartInY = screenHeight - spacedY - customHeight;

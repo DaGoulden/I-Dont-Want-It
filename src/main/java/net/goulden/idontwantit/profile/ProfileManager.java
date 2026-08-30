@@ -97,18 +97,24 @@ public class ProfileManager {
     }
 
     public static void renameProfile(String oldName, String newName) {
-
-        ItemProfile profile = profiles.remove(oldName);
-
+        ItemProfile profile = profiles.get(oldName);
         if (profile == null) return;
 
         profile.name = newName;
 
-        profiles.put(newName, profile);
+        List<String> keys = new ArrayList<>(profiles.keySet());
+        int index = keys.indexOf(oldName);
+        keys.set(index, newName);
 
+        Map<String, ItemProfile> reordered = new LinkedHashMap<>();
+        for (String key : keys) {
+            reordered.put(key, key.equals(newName) ? profile : profiles.get(key));
+        }
+
+        profiles.clear();
+        profiles.putAll(reordered);
         saveProfiles();
     }
-
     public static int getActiveProfileCount() {
         int count = 0;
         for (ItemProfile profile : profiles.values()) {

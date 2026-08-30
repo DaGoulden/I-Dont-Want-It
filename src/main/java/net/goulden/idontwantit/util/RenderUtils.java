@@ -37,9 +37,13 @@ public final class RenderUtils {
     }
 
     public static void renderCustomOutline(GuiGraphics g, int x, int y, int width, int height, boolean renderUpLine, int color) {
-        if (renderUpLine) g.fill(x, y, x + width, y + spaceBetweenButtons, color);
-        g.fill(x, y + height - spaceBetweenButtons, x + width, y + height, color);
-        g.fill(x, y + spaceBetweenButtons, x + spaceBetweenButtons, y + height - spaceBetweenButtons, color);
-        g.fill(x + width - spaceBetweenButtons, y + spaceBetweenButtons, x + width, y + height - spaceBetweenButtons, color);
+        // UP
+        if (renderUpLine) g.fill(x + spaceBetweenButtons, y, x + width - spaceBetweenButtons, y + spaceBetweenButtons, color);
+        // LEFT
+        g.fill(x, y, x + spaceBetweenButtons, y + height, color);
+        // RIGHT
+        g.fill(x + width - spaceBetweenButtons, y, x + width, y + height, color);
+        // BOTTOM
+        g.fill(x + spaceBetweenButtons, y + height - spaceBetweenButtons, x + width - spaceBetweenButtons, y + height, color);
     }
 }

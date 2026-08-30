@@ -32,7 +32,7 @@ public class ConfigBuilder {
         // Durations
         protected final ModConfigSpec.IntValue stateButtonDuration;
         protected final ModConfigSpec.IntValue deleteConfirmationDuration;
-        protected final ModConfigSpec.IntValue editBoxErrorDuration;
+        protected final ModConfigSpec.IntValue editBoxConfirmationDuration;
 
         Client(ModConfigSpec.Builder builder) {
             primaryColor = builder
@@ -76,9 +76,9 @@ public class ConfigBuilder {
             deleteConfirmationDuration = builder
                     .comment("The duration of the delete button confirmation")
                     .defineInRange("deleteConfirmationDuration", 20, 1, 200);
-            editBoxErrorDuration = builder
+            editBoxConfirmationDuration = builder
                     .comment("The duration of the edit box error in the profile name change")
-                    .defineInRange("editBoxErrorDuration", 20, 1, 200);
+                    .defineInRange("editBoxConfirmationDuration", 20, 1, 200);
         }
     }
 }
