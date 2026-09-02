@@ -29,10 +29,11 @@ public class ConfigBuilder {
         protected final ModConfigSpec.IntValue spacedText;
         protected final ModConfigSpec.IntValue spaceBetweenButtons;
 
-        // Durations
+        // Animations
         protected final ModConfigSpec.IntValue stateButtonDuration;
         protected final ModConfigSpec.IntValue deleteConfirmationDuration;
         protected final ModConfigSpec.IntValue editBoxConfirmationDuration;
+        protected final ModConfigSpec.IntValue scrollbarAnimationDuration;
 
         Client(ModConfigSpec.Builder builder) {
             primaryColor = builder
@@ -46,7 +47,7 @@ public class ConfigBuilder {
                     .define("tertiaryColor", "22000000");
             hoveredAdditiveColor = builder
                     .comment("Additive color when a button is hovered (ARGB hex, 8 characters)")
-                    .define("hoveredAdditiveColor", "88000000");
+                    .define("hoveredAdditiveColor", "55000000");
             linesColor = builder
                     .comment("Text and simple lines color (RGB hex, 6 characters)")
                     .define("linesColor", "FFFFFF");
@@ -72,13 +73,16 @@ public class ConfigBuilder {
 
             stateButtonDuration = builder
                     .comment("The duration of the state button animation")
-                    .defineInRange("stateButtonDuration", 10, 1, 100);
+                    .defineInRange("stateButtonDuration", 10, 0, 50);
             deleteConfirmationDuration = builder
                     .comment("The duration of the delete button confirmation")
-                    .defineInRange("deleteConfirmationDuration", 20, 1, 200);
+                    .defineInRange("deleteConfirmationDuration", 25, 5, 100);
             editBoxConfirmationDuration = builder
-                    .comment("The duration of the edit box error in the profile name change")
-                    .defineInRange("editBoxConfirmationDuration", 20, 1, 200);
+                    .comment("The duration of the edit box error or success animation in the profile name change")
+                    .defineInRange("editBoxConfirmationDuration", 20, 5, 80);
+            scrollbarAnimationDuration = builder
+                    .comment("The duration of the scrollbar appearing animation")
+                    .defineInRange("scrollbarAnimationDuration", 10, 0, 50);
         }
     }
 }

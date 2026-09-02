@@ -40,7 +40,7 @@ public class EditProfileScreen extends Screen {
 
     CustomButton iconSelectorButton;
     CustomEditBox nameEditBox;
-    CustomButton stateButton;
+    ProfileStateButton stateButton;
     CustomButton itemsTabButton;
     CustomButton tagsTabButton;
     public static IgnoredItemsList ignoredItemsList;
@@ -93,8 +93,10 @@ public class EditProfileScreen extends Screen {
         addRenderableWidget(nameEditBox);
 
 // STATE BUTTON
-        stateButton = new CustomButton(
+        stateButton = new ProfileStateButton(
                 b -> ProfileManager.toggleProfileState(profileName),
+                profileName,
+                stateButtonElapsed,
                 width - spacedX - cornerButtonsSize,
                 spacedY,
                 cornerButtonsSize,
@@ -152,7 +154,7 @@ public class EditProfileScreen extends Screen {
                 spacedY + cornerButtonsSize + spaceBetweenButtons * 3,
                 width - spacedX * 2 - (customHeight + spaceBetweenButtons) * 2 - spaceBetweenButtons * 4,
                 height - spacedY * 2 - spaceBetweenButtons * 2 - cornerButtonsSize - customHeight - spaceBetweenButtons * 4,
-                iconSize + spaceBetweenButtons * 2
+                iconSize + spacedText * 2
         );
         addRenderableWidget(ignoredItemsList);
 
@@ -185,11 +187,6 @@ public class EditProfileScreen extends Screen {
         super.render(g, mouseX, mouseY, partialTick);
 
         recalculate(height, font);
-        int stateBoxWidth = cornerButtonsSize / 2;
-        int stateBoxHeight = cornerButtonsSize / 3;
-        int stateBoxX = (width - spacedX - cornerButtonsSize) + cornerButtonsSize / 2 - stateBoxWidth / 2;
-        int stateBoxY = spacedY + cornerButtonsSize / 2 - stateBoxHeight / 2;
-        float stateProgress = easeInOutCubic((float) stateButtonElapsed / stateButtonDuration);
         String newName = nameEditBox.getValue().trim();
 
 // ICON SELECTOR BUTTON
@@ -255,26 +252,7 @@ public class EditProfileScreen extends Screen {
                 cornerButtonsSize
         );
         stateButton.setBackgroundColor(primaryColor);
-        g.renderOutline(
-                stateBoxX,
-                stateBoxY,
-                stateBoxWidth,
-                stateBoxHeight,
-                linesColor | (0xFF << 24)
-        );
-        g.pose().pushPose();
-        g.pose().translate(
-                stateBoxX + ((stateBoxWidth - stateBoxHeight) * stateProgress),
-                stateBoxY,
-                0
-        );
-        g.fill(2,
-                2,
-                stateBoxHeight - 2,
-                stateBoxHeight - 2,
-                lerpColor(badMeaningColor, goodMeaningColor, stateProgress)
-        );
-        g.pose().popPose();
+        stateButton.setElapsed(stateButtonElapsed);
 
 // ITEMS TAB
         itemsTabButton.setPosition(
@@ -322,7 +300,7 @@ public class EditProfileScreen extends Screen {
                     width - spacedX * 2 - (customHeight + spaceBetweenButtons) * 2 - spaceBetweenButtons * 4,
                     height - spacedY * 2 - spaceBetweenButtons * 2 - cornerButtonsSize - customHeight - spaceBetweenButtons * 4
             );
-            ignoredItemsList.setItemHeight(iconSize + spaceBetweenButtons * 2);
+            ignoredItemsList.setItemHeight(iconSize + spacedText * 2);
         }
 
 // LIST OF TAGS
@@ -335,7 +313,7 @@ public class EditProfileScreen extends Screen {
                     width - spacedX * 2 - (customHeight + spaceBetweenButtons) * 2 - spaceBetweenButtons * 4,
                     height - spacedY * 2 - spaceBetweenButtons * 2 - cornerButtonsSize - customHeight - spaceBetweenButtons * 4
             );
-            ignoredTagsList.setItemHeight(iconSize + spaceBetweenButtons * 2);
+            ignoredTagsList.setItemHeight(iconSize + spacedText * 2);
         }
 
 // AVAILABLE ITEMS LIST
@@ -349,7 +327,7 @@ public class EditProfileScreen extends Screen {
                     addItemEditBox.getWidth() - spaceBetweenButtons * 4,
                     150 - spaceBetweenButtons * 3
             );
-            availableItemsList.setItemHeight(iconSize);
+            availableItemsList.setItemHeight(iconSize + spacedText / 2 * 2);
             availableItemsList.setScissorBottom(Math.min(ignoredItemsList.getBottom(), availableItemsList.getBottom()));
 
             ignoredItemsList.addToMaxPosition(150);
@@ -384,6 +362,7 @@ public class EditProfileScreen extends Screen {
                 customHeight
         );
         closeButton.setBackgroundColor(primaryColor);
+        closeButton.setTextUsedColor(linesColor);
     }
 
     @Override
@@ -446,6 +425,9 @@ public class EditProfileScreen extends Screen {
     public void tick() {
 
         ignoredItemsList.tick();
+        availableItemsList.tick();
+        ignoredTagsList.tick();
+        //availableTagsList.tick();
 
         if (editBoxConfirmationElapsed <= editBoxConfirmationDuration) {
             editBoxConfirmationElapsed++;
@@ -454,10 +436,9 @@ public class EditProfileScreen extends Screen {
             changedNameSuccessfully = false;
         }
 
-        boolean isActive = ProfileManager.isProfileActive(profileName);
-        if (isActive && stateButtonElapsed < stateButtonDuration) {
+        if (ProfileManager.isProfileActive(profileName) && stateButtonElapsed < stateButtonDuration) {
             stateButtonElapsed++;
-        } else if (!isActive && stateButtonElapsed > 0) {
+        } else if (!ProfileManager.isProfileActive(profileName) && stateButtonElapsed > 0) {
             stateButtonElapsed--;
         }
     }

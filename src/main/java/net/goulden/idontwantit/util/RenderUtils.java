@@ -1,6 +1,7 @@
 package net.goulden.idontwantit.util;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 
 import static net.goulden.idontwantit.util.GUIVariables.*;
 
@@ -28,12 +29,7 @@ public final class RenderUtils {
     }
 
     public static float easeInOutCubic(float t) {
-        if (t < 0.5f) {
-            return 4f * t * t * t;
-        } else {
-            float f = 2f * t - 2f;
-            return 1f + 0.5f * f * f * f;
-        }
+        return t < 0.5F ? 4.0F * t * t * t : 1.0F - (float) Math.pow(-2.0F * t + 2.0F, 3) / 2.0F;
     }
 
     public static void renderCustomOutline(GuiGraphics g, int x, int y, int width, int height, boolean renderUpLine, int color) {
@@ -45,5 +41,21 @@ public final class RenderUtils {
         g.fill(x + width - spaceBetweenButtons, y, x + width, y + height, color);
         // BOTTOM
         g.fill(x + spaceBetweenButtons, y + height - spaceBetweenButtons, x + width - spaceBetweenButtons, y + height, color);
+    }
+
+    public static void drawCutString(GuiGraphics g, int mouseX, int mouseY, String text, int maxWidth, int x, int y, int color) {
+        String displayName;
+        if (font.width(text) > maxWidth && !(mouseX >= x && mouseX <= x + maxWidth && mouseY >= y && mouseY <= y + fontHeight)) {
+            displayName = font.plainSubstrByWidth(text, maxWidth - font.width("...")) + "...";
+        } else {
+            displayName = text;
+        }
+        g.drawString(
+                font,
+                displayName,
+                x,
+                y,
+                color
+        );
     }
 }

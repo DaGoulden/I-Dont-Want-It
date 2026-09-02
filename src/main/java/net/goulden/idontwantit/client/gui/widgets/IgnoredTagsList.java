@@ -53,7 +53,7 @@ public class IgnoredTagsList extends CustomContainerList<IgnoredTagsList.EntryBa
         }
 
         @Override
-        public void render(GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hover, float partialTick) {
+        public void render(GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, float partialTick) {
 
 // TAG BACKGROUND
             g.fill(left,
@@ -67,8 +67,8 @@ public class IgnoredTagsList extends CustomContainerList<IgnoredTagsList.EntryBa
             g.drawString(
                     font,
                     tag.toString(),
-                    left + spaceBetweenButtons,
-                    top + spaceBetweenButtons,
+                    left + spacedText,
+                    top + spacedText,
                     linesColor
             );
 
@@ -112,7 +112,7 @@ public class IgnoredTagsList extends CustomContainerList<IgnoredTagsList.EntryBa
         }
 
         @Override
-        public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hover, float partialTick) {
+        public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, float partialTick) {
 
 // ADD TAG BUTTON
             addTagButton.setPosition(

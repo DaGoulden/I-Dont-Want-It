@@ -18,21 +18,22 @@ public final class GUIVariables {
     public static int spacedY;
     public static int spacedText;
     public static int spaceBetweenButtons;
-    public static int fontHeight;
-    public static int customHeight;
-    public static int firstLineEndInY;
-    public static int secondLineStartInY;
-    public static int cornerButtonsSize;
+    public static int fontHeight; // Automatic
+    public static int customHeight; // Automatic
+    public static int firstLineEndInY; // Automatic
+    public static int secondLineStartInY; // Automatic
+    public static int cornerButtonsSize; // Automatic
     public static int scrollbarWidth = 6; // Do not change
     public static int iconSize = 16; // Do not change
 
-    // Durations
+    // Animations
     public static int stateButtonDuration;
     public static int deleteConfirmationDuration;
     public static int editBoxConfirmationDuration;
+    public static int scrollbarAnimationDuration;
 
     // Font
-    public static Font font;
+    public static Font font; // Automatic
 
     public static void recalculate(int screenHeight, Font usedFont) {
         font = usedFont;

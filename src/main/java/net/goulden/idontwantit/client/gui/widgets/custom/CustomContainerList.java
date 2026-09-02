@@ -1,19 +1,12 @@
 package net.goulden.idontwantit.client.gui.widgets.custom;
 
 import com.google.common.collect.Lists;
-import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractContainerWidget;
 import net.minecraft.client.gui.components.events.ContainerEventHandler;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.narration.NarratableEntry;
-import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.navigation.FocusNavigationEvent;
-import net.minecraft.client.gui.navigation.ScreenAxis;
-import net.minecraft.client.gui.navigation.ScreenDirection;
 import net.minecraft.network.chat.CommonComponents;
-import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -22,22 +15,20 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 import java.util.AbstractList;
 import java.util.List;
-import java.util.Objects;
-import java.util.function.Predicate;
 
 import static net.goulden.idontwantit.util.GUIVariables.*;
+import static net.goulden.idontwantit.util.RenderUtils.easeInOutCubic;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>> extends AbstractContainerWidget {
     private int itemHeight;
     private int addMaxPosition = 0;
     private final TrackedList children = new TrackedList();
+    private int scissorBottom = getBottom();
     private double scrollAmount;
     private boolean scrolling;
-    @Nullable
-    private E selected;
-    @Nullable
-    private E hovered;
+    private int scrollbarAnimationElapsed = 0;
+    private float scrollbarAnimationProgress;
 
     public CustomContainerList() {
         super(0, 0, 0, 0, CommonComponents.EMPTY);
@@ -49,24 +40,24 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
     }
 
     public int getRowLeft() {
-        return this.getX();
+        return getX();
     }
 
     public int getRowRight() {
-        return this.getRowLeft() + this.getWidth();
+        return getRowLeft() + getWidth();
     }
 
     public int getRowWidth() {
-        if (this.scrollbarVisible()) return width - scrollbarWidth - spaceBetweenButtons;
+        if (isScrollbarVisible()) return width - scrollbarWidth - spaceBetweenButtons;
         return width;
     }
 
     public int getRowTop(int index) {
-        return this.getY() - (int)this.getScrollAmount() + index * (this.itemHeight + spaceBetweenButtons);
+        return getY() - (int)getScrollAmount() + index * (itemHeight + spaceBetweenButtons);
     }
 
     public int getRowBottom(int index) {
-        return this.getRowTop(index) + this.itemHeight;
+        return getRowTop(index) + itemHeight;
     }
 
     public void setItemHeight(int itemHeight) {
@@ -74,20 +65,11 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
     }
 
     public void addToMaxPosition(int height) {
-        this.addMaxPosition = height;
+        addMaxPosition = height;
     }
 
     public int getMaxPosition() {
-        return this.getItemCount() * (this.itemHeight + spaceBetweenButtons) - spaceBetweenButtons + this.addMaxPosition;
-    }
-
-    @Nullable
-    public E getSelected() {
-        return this.selected;
-    }
-
-    public void setSelected(@Nullable E selected) {
-        this.selected = selected;
+        return getItemCount() * (itemHeight + spaceBetweenButtons) - spaceBetweenButtons + addMaxPosition;
     }
 
     @Nullable
@@ -97,196 +79,183 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
 
     @Override
     public void setFocused(@Nullable GuiEventListener focused) {
-        if (this.getFocused() != focused) {
+        if (getFocused() != focused) {
             super.setFocused(focused);
-            if (focused == null) {
-                this.setSelected(null);
-            }
         }
     }
 
     @Override
     public final @NotNull List<E> children() {
-        return this.children;
+        return children;
     }
 
     protected void clearEntries() {
-        this.children.clear();
-        this.selected = null;
+        children.clear();
     }
 
     protected E getEntry(int index) {
-        return this.children().get(index);
+        return children().get(index);
     }
 
     protected void addEntry(E entry) {
-        this.children.add(entry);
+        children.add(entry);
     }
 
     protected int getItemCount() {
-        return this.children().size();
-    }
-
-    @Nullable
-    protected final E getEntryAtPosition(double mouseX, double mouseY) {
-        int i1 = Mth.floor(mouseY - (double)this.getY()) + (int)this.getScrollAmount();
-        int j1 = i1 / (this.itemHeight + spaceBetweenButtons);
-        return mouseX >= this.getRowLeft()
-                && mouseX <= this.getRowRight()
-                && j1 >= 0
-                && i1 >= 0
-                && j1 < this.getItemCount()
-                ? this.children().get(j1)
-                : null;
+        return children().size();
     }
 
     @Override
     public void renderWidget(@NotNull GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        setScrollAmount(scrollAmount);
-        this.hovered = this.isMouseOver(mouseX, mouseY) ? this.getEntryAtPosition(mouseX, mouseY) : null;
-        this.enableScissor(g);
 
-        this.renderListItems(g, mouseX, mouseY, partialTick);
-
-        if (this.scrollbarVisible()) {
-            int scrollbarX = this.getScrollbarPosition();
-            int maxScrollbarHeight = (int)((float)(this.height * this.height) / (float)this.getMaxPosition());
-            maxScrollbarHeight = Mth.clamp(maxScrollbarHeight, 32, this.height - 4);
-            int scrollbarY = (int)this.getScrollAmount() * (this.height - maxScrollbarHeight) / this.getMaxScroll() + this.getY();
-            if (scrollbarY < this.getY()) {
-                scrollbarY = this.getY();
-            }
-
-            g.fill(scrollbarX, this.getY(), scrollbarX + scrollbarWidth, this.getY() + this.getHeight(), tertiaryColor);
-            g.fill(scrollbarX, scrollbarY, scrollbarX + scrollbarWidth, scrollbarY + maxScrollbarHeight, secondaryColor);
+        if (!isScrollbarVisible()) {
+            scrollbarAnimationElapsed = scrollbarAnimationDuration;
+        } else if (scrollbarAnimationDuration == 0) {
+            scrollbarAnimationElapsed = 0;
         }
+        setScrollAmount(scrollAmount);
 
+        g.enableScissor(getX(), getY(), getRight() + 100, scissorBottom);
+        renderItems(g, mouseX, mouseY, partialTick);
+        g.disableScissor();
+        g.enableScissor(getX(), getY(), getRight(), scissorBottom);
+        if (isScrollbarVisible()) renderScrollbar(g);
         g.disableScissor();
     }
 
-    protected void renderListItems(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
-        int i = this.getRowLeft();
-        int j = this.getRowWidth();
-        int k = this.itemHeight;
-        int l = this.getItemCount();
-
-        for (int i1 = 0; i1 < l; i1++) {
-            int j1 = this.getRowTop(i1);
-            int k1 = this.getRowBottom(i1);
-            if (k1 >= this.getY() && j1 <= this.getBottom()) {
-                this.renderItem(g, mouseX, mouseY, partialTick, i1, i, j1, j, k);
+    protected void renderItems(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+        for (int index = 0; index < getItemCount(); index++) {
+            int top = getRowTop(index);
+            int k1 = getRowBottom(index);
+            if (k1 >= getY() && top <= getBottom()) {
+                E e = getEntry(index);
+                e.render(g, index, top, getRowLeft(), getRowWidth(), itemHeight, mouseX, mouseY, partialTick);
             }
         }
     }
 
-    protected void renderItem(GuiGraphics g, int mouseX, int mouseY, float partialTick, int index, int left, int top, int width, int height) {
-        E e = this.getEntry(index);
-        e.render(g, index, top, left, width, height, mouseX, mouseY, Objects.equals(this.hovered, e), partialTick);
+    protected void renderScrollbar(GuiGraphics g) {
+        scrollbarAnimationProgress =
+                !(scrollbarAnimationDuration == 0)
+                ? easeInOutCubic((float) scrollbarAnimationElapsed / scrollbarAnimationDuration)
+                : 0;
+        int maxScrollbarHeight = Mth.clamp((int)((float)(height * height) / (float)getMaxPosition()), 32, height - 4);
+        int scrollbarY = (int)getScrollAmount() * (height - maxScrollbarHeight) / getMaxScroll() + getY();
+        if (scrollbarY < getY()) scrollbarY = getY();
+
+        g.pose().pushPose();
+        g.pose().translate(
+                getScrollbarX(),
+                0,
+                0
+        );
+        g.fill(0, getY(), scrollbarWidth, getY() + getHeight(), tertiaryColor);
+        g.fill(0, scrollbarY, scrollbarWidth, scrollbarY + maxScrollbarHeight, secondaryColor);
+        g.pose().popPose();
     }
 
-    protected boolean scrollbarVisible() {
-        return this.getMaxScroll() > 0;
+    public void tick() {
+        if (isScrollbarVisible() && scrollbarAnimationElapsed > 0) {
+            scrollbarAnimationElapsed--;
+        }
     }
-
-    private int scissorBottom = this.getBottom();
 
     public void setScissorBottom(int bottom) {
-        this.scissorBottom = bottom;
+        scissorBottom = bottom;
     }
 
-    protected void enableScissor(GuiGraphics g) {
-        g.enableScissor(this.getX(), this.getY(), this.getRight(), scissorBottom);
+    public void scroll(double scrolled) {
+        setScrollAmount(getScrollAmount() + scrolled);
     }
 
-    protected void ensureVisible(E entry) {
-        int i = this.getRowTop(this.children().indexOf(entry));
-        int j = i - this.getY() - this.itemHeight;
-        if (j < 0) {
-            this.scroll(j);
-        }
-
-        int k = this.getBottom() - i - this.itemHeight - this.itemHeight;
-        if (k < 0) {
-            this.scroll(-k);
-        }
+    protected boolean isScrollbarVisible() {
+        return getMaxScroll() > 0;
     }
 
-    private void scroll(int scroll) {
-        this.setScrollAmount(this.getScrollAmount() + (double)scroll);
+    protected float getScrollbarX() {
+        return getRight() - scrollbarWidth + scrollbarWidth * scrollbarAnimationProgress;
     }
 
     public double getScrollAmount() {
-        return this.scrollAmount;
+        return scrollAmount;
     }
 
     public void setScrollAmount(double scroll) {
-        this.scrollAmount = Mth.clamp(scroll, 0.0, this.getMaxScroll());
+        scrollAmount = Mth.clamp(scroll, 0.0, getMaxScroll());
     }
 
     public int getMaxScroll() {
-        return Math.max(0, this.getMaxPosition() - this.height);
+        return Math.max(0, getMaxPosition() - height);
     }
 
-    protected void updateScrollingState(double mouseX, double mouseY, int button) {
-        this.scrolling = button == 0 && mouseX >= (double)this.getScrollbarPosition() && mouseX < (double)(this.getScrollbarPosition() + 6);
+    protected void updateScrollingState(double mouseX, int button) {
+        scrolling = button == 0 && mouseX >= (double) getScrollbarX() && mouseX < (double)(getScrollbarX() + scrollbarWidth);
     }
 
-    protected int getScrollbarPosition() {
-        return this.getRight() - scrollbarWidth;
-    }
-
-    protected boolean isValidMouseClick(int button) {
-        return button == 0;
+    @Nullable
+    protected final E getEntryAtPosition(double mouseX, double mouseY) {
+        int inListY = Mth.floor(mouseY - (double)getY()) + (int)getScrollAmount();
+        int index = inListY / (itemHeight + spaceBetweenButtons);
+        if (mouseX >= getRowLeft()
+                && mouseX <= getRowRight()
+                && index >= 0
+                && inListY >= 0
+                && index < getItemCount()
+        ) {
+            return children().get(index);
+        } else {
+            return null;
+        }
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (!this.isValidMouseClick(button)) {
+        if (!(button == 0)) {
             return false;
         } else {
-            this.updateScrollingState(mouseX, mouseY, button);
-            if (!this.isMouseOver(mouseX, mouseY)) {
+            updateScrollingState(mouseX, button);
+            if (!isMouseOver(mouseX, mouseY)) {
                 return false;
             } else {
-                E e = this.getEntryAtPosition(mouseX, mouseY);
+                E e = getEntryAtPosition(mouseX, mouseY);
                 if (e != null) {
                     if (e.mouseClicked(mouseX, mouseY, button)) {
-                        E e1 = this.getFocused();
+                        E e1 = getFocused();
                         if (e1 != e && e1 instanceof ContainerEventHandler containereventhandler) {
                             containereventhandler.setFocused(null);
                         }
 
-                        this.setFocused(e);
-                        this.setDragging(true);
+                        setFocused(e);
+                        setDragging(true);
                         return true;
                     }
                 }
 
-                return this.scrolling;
+                return scrolling;
             }
         }
     }
 
     @Override
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        return this.getFocused() != null && this.getFocused().mouseReleased(mouseX, mouseY, button);
+        return getFocused() != null && getFocused().mouseReleased(mouseX, mouseY, button);
     }
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
         if (super.mouseDragged(mouseX, mouseY, button, dragX, dragY)) {
             return true;
-        } else if (button == 0 && this.scrolling) {
-            if (mouseY < (double)this.getY()) {
-                this.setScrollAmount(0.0);
-            } else if (mouseY > (double)this.getBottom()) {
-                this.setScrollAmount(this.getMaxScroll());
+        } else if (button == 0 && scrolling) {
+            if (mouseY < (double)getY()) {
+                setScrollAmount(0.0);
+            } else if (mouseY > (double)getBottom()) {
+                setScrollAmount(getMaxScroll());
             } else {
-                double d0 = Math.max(1, this.getMaxScroll());
-                int i = this.height;
-                int j = Mth.clamp((int)((float)(i * i) / (float)this.getMaxPosition()), 32, i - 8);
+                double d0 = Math.max(1, getMaxScroll());
+                int i = height;
+                int j = Mth.clamp((int)((float)(i * i) / (float)getMaxPosition()), 32, i - 8);
                 double d1 = Math.max(1.0, d0 / (double)(i - j));
-                this.setScrollAmount(this.getScrollAmount() + dragY * d1);
+                setScrollAmount(getScrollAmount() + dragY * d1);
             }
 
             return true;
@@ -297,290 +266,57 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        this.setScrollAmount(this.getScrollAmount() - scrollY * (double)this.itemHeight / 2.0);
+        scroll(-scrollY * (double)itemHeight / 2.0);
         return true;
     }
 
-    @Nullable
-    protected E nextEntry(ScreenDirection direction, Predicate<E> predicate, @Nullable E selected) {
-        int i = switch (direction) {
-            case RIGHT, LEFT -> 0;
-            case UP -> -1;
-            case DOWN -> 1;
-        };
-        if (!this.children().isEmpty() && i != 0) {
-            int j;
-            if (selected == null) {
-                j = i > 0 ? 0 : this.children().size() - 1;
-            } else {
-                j = this.children().indexOf(selected) + i;
-            }
-
-            for (int k = j; k >= 0 && k < this.children.size(); k += i) {
-                E e = this.children().get(k);
-                if (predicate.test(e)) {
-                    return e;
-                }
-            }
-        }
-
-        return null;
-    }
-
     @Override
-    public boolean isMouseOver(double mouseX, double mouseY) {
-        return mouseY >= this.getY() && mouseY <= this.getBottom() && mouseX >= this.getX() && mouseX <= this.getRight();
-    }
-
-    @Nullable
-    protected E getHovered() {
-        return this.hovered;
-    }
-
-    void bindEntryToSelf(CustomContainerList.Entry<E> entry) {
-        entry.list = this;
-    }
-
-    protected void narrateListElementPosition(NarrationElementOutput narrationElementOutput, E entry) {
-        List<E> list = this.children();
-        if (list.size() > 1) {
-            int i = list.indexOf(entry);
-            if (i != -1) {
-                narrationElementOutput.add(NarratedElementType.POSITION, Component.translatable("narrator.position.list", i + 1, list.size()));
-            }
-        }
-    }
-
-    @Nullable
-    @Override
-    public ComponentPath nextFocusPath(@NotNull FocusNavigationEvent event) {
-        if (this.getItemCount() == 0) {
-            return null;
-        } else if (!(event instanceof FocusNavigationEvent.ArrowNavigation focusnavigationevent$arrownavigation)) {
-            return super.nextFocusPath(event);
-        } else {
-            E e = this.getFocused();
-            if (focusnavigationevent$arrownavigation.direction().getAxis() == ScreenAxis.HORIZONTAL && e != null) {
-                return ComponentPath.path(this, e.nextFocusPath(event));
-            } else {
-                int i = -1;
-                ScreenDirection screendirection = focusnavigationevent$arrownavigation.direction();
-                if (e != null) {
-                    i = e.children().indexOf(e.getFocused());
-                }
-
-                if (i == -1) {
-                    switch (screendirection) {
-                        case LEFT:
-                            i = Integer.MAX_VALUE;
-                            screendirection = ScreenDirection.DOWN;
-                            break;
-                        case RIGHT:
-                            i = 0;
-                            screendirection = ScreenDirection.DOWN;
-                            break;
-                        default:
-                            i = 0;
-                    }
-                }
-
-                E e1 = e;
-
-                ComponentPath componentpath;
-                do {
-                    e1 = this.nextEntry(screendirection, p_351636_ -> !p_351636_.children().isEmpty(), e1);
-                    if (e1 == null) {
-                        return null;
-                    }
-
-                    componentpath = e1.focusPathAtIndex(focusnavigationevent$arrownavigation, i);
-                } while (componentpath == null);
-
-                return ComponentPath.path(this, componentpath);
-            }
-        }
-    }
-
-    @Override
-    public NarratableEntry.@NotNull NarrationPriority narrationPriority() {
-        return this.isFocused() ? NarratableEntry.NarrationPriority.FOCUSED : super.narrationPriority();
-    }
-
-    @Override
-    public void updateWidgetNarration(@NotNull NarrationElementOutput narrationElementOutput) {
-//        E e = this.getHovered();
-//        if (e != null) {
-//            e.updateNarration(narrationElementOutput.nest());
-//            this.narrateListElementPosition(narrationElementOutput, e);
-//        } else {
-//            E e1 = this.getFocused();
-//            if (e1 != null) {
-//                e1.updateNarration(narrationElementOutput.nest());
-//                this.narrateListElementPosition(narrationElementOutput, e1);
-//            }
-//        }
-//
-//        narrationElementOutput.add(NarratedElementType.USAGE, Component.translatable("narration.component_list.usage"));
-    }
+    public void updateWidgetNarration(@NotNull NarrationElementOutput narrationElementOutput) { }
 
     @OnlyIn(Dist.CLIENT)
     protected abstract static class Entry<E extends CustomContainerList.Entry<E>> implements ContainerEventHandler {
 
         protected CustomContainerList<E> list;
 
-        @Override
-        public void setFocused(boolean focused) {
-        }
-
-        @Override
-        public boolean isFocused() {
-            return this.list.getFocused() == this;
-        }
-
-        public abstract void render(
-                GuiGraphics g,
-                int index,
-                int top,
-                int left,
-                int width,
-                int height,
-                int mouseX,
-                int mouseY,
-                boolean hovering,
-                float partialTick
-        );
-
-        @Override
-        public boolean isMouseOver(double mouseX, double mouseY) {
-            return Objects.equals(this.list.getEntryAtPosition(mouseX, mouseY), this);
-        }
+        public abstract void render(GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, float partialTick);
 
         @Nullable
         private GuiEventListener focused;
-        @Nullable
-        private NarratableEntry lastNarratable;
         private boolean dragging;
 
-        @Override
-        public boolean isDragging() {
-            return this.dragging;
-        }
-
-        /**
-         * Sets if the GUI element is dragging or not.
-         *
-         * @param dragging the dragging state of the GUI element.
-         */
         @Override
         public void setDragging(boolean dragging) {
             this.dragging = dragging;
         }
 
-        /**
-         * Called when a mouse button is clicked within the GUI element.
-         * <p>
-         * @return {@code true} if the event is consumed, {@code false} otherwise.
-         *
-         * @param mouseX the X coordinate of the mouse.
-         * @param mouseY the Y coordinate of the mouse.
-         * @param button the button that was clicked.
-         */
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            return ContainerEventHandler.super.mouseClicked(mouseX, mouseY, button);
+        public boolean isDragging() {
+            return dragging;
         }
 
-        /**
-         * Sets the focus state of the GUI element.
-         *
-         * @param listener the focused GUI element.
-         */
         @Override
         public void setFocused(@Nullable GuiEventListener listener) {
-            if (this.focused != null) {
-                this.focused.setFocused(false);
+            if (focused != null) {
+                focused.setFocused(false);
             }
 
             if (listener != null) {
                 listener.setFocused(true);
             }
 
-            this.focused = listener;
+            focused = listener;
         }
 
         @Nullable
         @Override
         public GuiEventListener getFocused() {
-            return this.focused;
+            return focused;
         }
 
-        @Nullable
-        public ComponentPath focusPathAtIndex(FocusNavigationEvent event, int index) {
-            if (this.children().isEmpty()) {
-                return null;
-            } else {
-                ComponentPath componentpath = this.children().get(Math.min(index, this.children().size() - 1)).nextFocusPath(event);
-                return ComponentPath.path(this, componentpath);
-            }
-        }
-
-        /**
-         * Retrieves the next focus path based on the given focus navigation event.
-         * <p>
-         * @return the next focus path as a ComponentPath, or {@code null} if there is no next focus path.
-         *
-         * @param event the focus navigation event.
-         */
-        @Nullable
         @Override
-        public ComponentPath nextFocusPath(@NotNull FocusNavigationEvent event) {
-            if (event instanceof FocusNavigationEvent.ArrowNavigation(ScreenDirection direction)) {
-                int i = switch (direction) {
-                    case LEFT -> -1;
-                    case RIGHT -> 1;
-                    case UP, DOWN -> 0;
-                };
-                if (i == 0) {
-                    return null;
-                }
-
-                int j = Mth.clamp(i + this.children().indexOf(this.getFocused()), 0, this.children().size() - 1);
-
-                for (int k = j; k >= 0 && k < this.children().size(); k += i) {
-                    GuiEventListener guieventlistener = this.children().get(k);
-                    ComponentPath componentpath = guieventlistener.nextFocusPath(event);
-                    if (componentpath != null) {
-                        return ComponentPath.path(this, componentpath);
-                    }
-                }
-            }
-
-            return ContainerEventHandler.super.nextFocusPath(event);
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            return ContainerEventHandler.super.mouseClicked(mouseX, mouseY, button);
         }
-
-//        public abstract List<? extends NarratableEntry> narratables();
-//
-//        void updateNarration(NarrationElementOutput narrationElementOutput) {
-//            List<? extends NarratableEntry> list = this.narratables();
-//            Screen.NarratableSearchResult screen$narratablesearchresult = Screen.findNarratableWidget(list, this.lastNarratable);
-//            if (screen$narratablesearchresult != null) {
-//                if (screen$narratablesearchresult.priority.isTerminal()) {
-//                    this.lastNarratable = screen$narratablesearchresult.entry;
-//                }
-//
-//                if (list.size() > 1) {
-//                    narrationElementOutput.add(
-//                            NarratedElementType.POSITION,
-//                            Component.translatable("narrator.position.object_list", screen$narratablesearchresult.index + 1, list.size())
-//                    );
-//                    if (screen$narratablesearchresult.priority == NarratableEntry.NarrationPriority.FOCUSED) {
-//                        narrationElementOutput.add(NarratedElementType.USAGE, Component.translatable("narration.component_list.usage"));
-//                    }
-//                }
-//
-//                screen$narratablesearchresult.entry.updateNarration(narrationElementOutput.nest());
-//            }
-//        }
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -588,27 +324,31 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
         private final List<E> delegate = Lists.newArrayList();
 
         public E get(int index) {
-            return this.delegate.get(index);
+            return delegate.get(index);
         }
 
         @Override
         public int size() {
-            return this.delegate.size();
+            return delegate.size();
         }
 
         public E set(int index, E entry) {
-            E e = this.delegate.set(index, entry);
+            E e = delegate.set(index, entry);
             CustomContainerList.this.bindEntryToSelf(entry);
             return e;
         }
 
         public void add(int index, E entry) {
-            this.delegate.add(index, entry);
+            delegate.add(index, entry);
             CustomContainerList.this.bindEntryToSelf(entry);
         }
 
         public E remove(int index) {
-            return this.delegate.remove(index);
+            return delegate.remove(index);
         }
+    }
+
+    void bindEntryToSelf(CustomContainerList.Entry<E> entry) {
+        entry.list = this;
     }
 }

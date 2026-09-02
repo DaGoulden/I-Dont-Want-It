@@ -36,7 +36,7 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
         private final CustomButton profileButton;
         private final CustomButton moveUpButton;
         private final CustomButton moveDownButton;
-        private final CustomButton stateButton;
+        private final ProfileStateButton stateButton;
         private final CustomButton deleteButton;
 
         final String profileName;
@@ -79,8 +79,10 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
             );
 
 // STATE BUTTON
-            stateButton = new CustomButton(
-                    b -> ProfileManager.toggleProfileState(profileName)
+            stateButton = new ProfileStateButton(
+                    b -> ProfileManager.toggleProfileState(profileName),
+                    profileName,
+                    stateButtonElapsed
             );
 
 // DELETE BUTTON
@@ -96,14 +98,9 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
         }
 
         @Override
-        public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hover, float partialTick) {
+        public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, float partialTick) {
 
             int profileCount = ProfileManager.getProfile(profileName).ignoredItems.size();
-            int stateBoxWidth = stateButton.getWidth() / 2;
-            int stateBoxHeight = stateButton.getHeight() / 4;
-            int stateBoxX = stateButton.getX() + stateButton.getWidth() / 2 - stateBoxWidth / 2;
-            int stateBoxY = stateButton.getY() + stateButton.getHeight() / 2 - stateBoxHeight / 2;
-            float stateProgress = easeInOutCubic((float) stateButtonElapsed / stateButtonDuration);
             List<String> allNames = new ArrayList<>(ProfileManager.getAllProfiles().keySet());
             int myIndex = allNames.indexOf(profileName);
             isMouseOverProfile = mouseX >= left && mouseY >= top && mouseX < left + width && mouseY < top + height;
@@ -124,8 +121,11 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
                     left + (height - iconSize) / 2,
                     top + (height - iconSize) / 2
             );
-            g.drawString(font,
+            drawCutString(g,
+                    mouseX,
+                    mouseY,
                     profileName,
+                    profileButton.getWidth() - (height + spacedText),
                     left + height,
                     top + spacedText,
                     linesColor
@@ -133,7 +133,7 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
             g.drawString(font,
                     profileCount + (profileCount == 1 ? " item" : " items"),
                     left + height + spacedText,
-                    top + spacedText + fontHeight + 2,
+                    top + spacedText + fontHeight + spacedText / 4 * 2,
                     linesColor | (0xAA << 24)
             );
 
@@ -207,27 +207,8 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
                     height
             );
             stateButton.setBackgroundColor(secondaryColor);
+            stateButton.setElapsed(stateButtonElapsed);
             stateButton.render(g, mouseX, mouseY, partialTick);
-            g.renderOutline(
-                    stateBoxX,
-                    stateBoxY,
-                    stateBoxWidth,
-                    stateBoxHeight,
-                    linesColor | (0xFF << 24)
-            );
-            g.pose().pushPose();
-            g.pose().translate(
-                    stateBoxX + ((stateBoxWidth - stateBoxHeight) * stateProgress),
-                    stateBoxY,
-                    0
-            );
-            g.fill(2,
-                    2,
-                    stateBoxHeight - 2,
-                    stateBoxHeight - 2,
-                    lerpColor(badMeaningColor, goodMeaningColor, stateProgress)
-            );
-            g.pose().popPose();
 
 // DELETE BUTTON
             deleteButton.setPosition(
@@ -247,7 +228,7 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
                     linesColor
             );
             if (deleteConfirmationElapsed <= deleteConfirmationDuration) {
-                float deleteProgress = (float) deleteConfirmationElapsed / deleteConfirmationDuration;
+                float deleteProgress = easeInOutCubic((float) deleteConfirmationElapsed / deleteConfirmationDuration);
                 int deleteAlpha = Math.max(5, (int)((1f - deleteProgress) * 255));
                 g.fill(deleteButton.getX(),
                         deleteButton.getY(),
@@ -308,7 +289,7 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
         }
 
         @Override
-        public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hover, float partialTick) {
+        public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, float partialTick) {
 
 // CREATE PROFILE BUTTON
             createProfileButton.setPosition(

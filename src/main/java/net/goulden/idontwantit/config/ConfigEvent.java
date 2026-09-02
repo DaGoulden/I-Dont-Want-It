@@ -1,6 +1,7 @@
 package net.goulden.idontwantit.config;
 
 import net.goulden.idontwantit.IDontWantIt;
+import net.goulden.idontwantit.client.gui.widgets.custom.CustomContainerList;
 import net.goulden.idontwantit.util.GUIVariables;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -38,5 +39,6 @@ public class ConfigEvent {
         GUIVariables.stateButtonDuration = CLIENT.stateButtonDuration.get();
         GUIVariables.deleteConfirmationDuration = CLIENT.deleteConfirmationDuration.get();
         GUIVariables.editBoxConfirmationDuration = CLIENT.editBoxConfirmationDuration.get();
+        GUIVariables.scrollbarAnimationDuration = CLIENT.scrollbarAnimationDuration.get();
     }
 }

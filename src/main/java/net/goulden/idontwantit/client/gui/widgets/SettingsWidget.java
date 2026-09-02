@@ -99,7 +99,7 @@ public class SettingsWidget extends AbstractContainerWidget {
             }
 
             @Override
-            public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hover, float partialTick) {
+            public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, float partialTick) {
 
                 g.drawString(font,
                         label,
@@ -163,7 +163,7 @@ public class SettingsWidget extends AbstractContainerWidget {
             }
 
             @Override
-            public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hover, float partialTick) {
+            public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, float partialTick) {
 
                 g.drawString(font,
                         label,
@@ -249,7 +249,7 @@ public class SettingsWidget extends AbstractContainerWidget {
                     v -> spaceBetweenButtons = v, 0, 20
             ));
 
-            // Durations
+            // Animations
             addEntry(new IntSettingEntry(
                     "stateButtonDuration",
                     () -> stateButtonDuration,

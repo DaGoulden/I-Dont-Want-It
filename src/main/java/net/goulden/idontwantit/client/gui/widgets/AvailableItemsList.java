@@ -16,6 +16,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import static net.goulden.idontwantit.util.GUIVariables.*;
+import static net.goulden.idontwantit.util.RenderUtils.drawCutString;
 
 public class AvailableItemsList extends CustomContainerList<AvailableItemsList.ItemEntry> {
 
@@ -52,27 +53,30 @@ public class AvailableItemsList extends CustomContainerList<AvailableItemsList.I
         }
 
         @Override
-        public void render(GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, boolean hovering, float partialTick) {
+        public void render(GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, float partialTick) {
 
 // ITEM BACKGROUND
+            int backgroundWidth = width - height - spaceBetweenButtons;
             g.fill(left,
                     top,
-                    left + width - height - spaceBetweenButtons,
+                    left + backgroundWidth,
                     top + height,
                     tertiaryColor
             );
 
 // ITEM ICON
             g.renderItem(new ItemStack(item),
-                    left,
-                    top
+                    left + spacedText / 2,
+                    top + spacedText / 2
             );
 
 // ITEM NAME
-            g.drawString(
-                    font,
+            drawCutString(g,
+                    mouseX,
+                    mouseY,
                     item.getDescription().getString(),
-                    left + spaceBetweenButtons + iconSize,
+                    backgroundWidth - (spacedText / 2 * 3 + iconSize),
+                    left + spacedText / 2 * 2 + iconSize,
                     top + (height - fontHeight) / 2,
                     linesColor
             );
@@ -91,7 +95,7 @@ public class AvailableItemsList extends CustomContainerList<AvailableItemsList.I
             g.drawCenteredString(font,
                     "+",
                     addButton.getX() + addButton.getWidth() / 2,
-                    addButton.getY() + (addButton.getHeight() - fontHeight) / 2,
+                    addButton.getY() + (addButton.getHeight() - fontHeight) / 2 + 1,
                     linesColor
             );
         }

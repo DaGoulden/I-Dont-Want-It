@@ -16,10 +16,19 @@ public class CustomButton extends Button {
     protected int usedTextColor = linesColor;
     protected boolean hoverable = true;
 
+    public CustomButton(OnPress onPress) {
+        super(0, 0, 0, 0, Component.empty(), onPress, DEFAULT_NARRATION);
+    }
+
     public CustomButton(OnPress onPress, String text, boolean isTextCentered) {
         super(0, 0, 0, 0, Component.empty(), onPress, DEFAULT_NARRATION);
         this.text = text;
         this.isTextCentered = isTextCentered;
+    }
+
+    public CustomButton(OnPress onPress, int x, int y, int w, int h, int color) {
+        super(x, y, w, h, Component.empty(), onPress, DEFAULT_NARRATION);
+        this.backgroundColor = color;
     }
 
     public CustomButton(OnPress onPress, String text, boolean isTextCentered, int x, int y, int w, int h, int color) {
@@ -27,15 +36,6 @@ public class CustomButton extends Button {
         this.backgroundColor = color;
         this.text = text;
         this.isTextCentered = isTextCentered;
-    }
-
-    public CustomButton(OnPress onPress) {
-        super(0, 0, 0, 0, Component.empty(), onPress, DEFAULT_NARRATION);
-    }
-
-    public CustomButton(OnPress onPress, int x, int y, int w, int h, int color) {
-        super(x, y, w, h, Component.empty(), onPress, DEFAULT_NARRATION);
-        this.backgroundColor = color;
     }
 
     @Override
@@ -54,16 +54,6 @@ public class CustomButton extends Button {
                     getX() + width,
                     getY() + height,
                     hoveredAdditiveColor
-            );
-        }
-
-        if (isFocused()) {
-            g.renderOutline(
-                    getX(),
-                    getY(),
-                    width,
-                    height,
-                    linesColor
             );
         }
 

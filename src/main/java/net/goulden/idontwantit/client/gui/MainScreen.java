@@ -49,7 +49,7 @@ public class MainScreen extends Screen {
                 firstLineEndInY + spaceBetweenButtons,
                 width - (spacedX + customHeight + spaceBetweenButtons) * 2,
                 height - (firstLineEndInY + spaceBetweenButtons) - (height - (secondLineStartInY - spaceBetweenButtons)),
-                spacedText * 2 + fontHeight * 2 + 2
+                spacedText * 2 + fontHeight * 2 + spacedText / 4 * 2
         );
         addRenderableWidget(profilesList);
 
@@ -154,7 +154,7 @@ public class MainScreen extends Screen {
                 width - (spacedX + customHeight + spaceBetweenButtons) * 2,
                 height - (firstLineEndInY + spaceBetweenButtons) - (height - (secondLineStartInY - spaceBetweenButtons))
         );
-        profilesList.setItemHeight(spacedText * 2 + fontHeight * 2 + 2);
+        profilesList.setItemHeight(spacedText * 2 + fontHeight * 2 + spacedText / 4 * 2);
 
 // CLOSE BUTTON
         closeButton.setPosition(
@@ -166,6 +166,7 @@ public class MainScreen extends Screen {
                 customHeight
         );
         closeButton.setBackgroundColor(primaryColor);
+        closeButton.setTextUsedColor(linesColor);
 
 // WHITELIST MODE BUTTON
         whitelistButton.setPosition(
@@ -177,6 +178,7 @@ public class MainScreen extends Screen {
                 customHeight
         );
         whitelistButton.setBackgroundColor(primaryColor);
+        whitelistButton.setTextUsedColor(linesColor);
         g.renderOutline(
                 checkboxX,
                 checkboxY,
@@ -201,6 +203,7 @@ public class MainScreen extends Screen {
                 customHeight
         );
         settingsButton.setBackgroundColor(primaryColor);
+        settingsButton.setTextUsedColor(linesColor);
         g.pose().pushPose();
         g.pose().translate(
                 settingsButtonX + (float) customHeight / 2,
@@ -247,6 +250,9 @@ public class MainScreen extends Screen {
     }
 
     public void tick() {
+
+        profilesList.tick();
+
         for (var entry : profilesList.children()) {
             if (entry instanceof ProfilesList.ProfileEntry profileEntry) {
                 profileEntry.tick();
