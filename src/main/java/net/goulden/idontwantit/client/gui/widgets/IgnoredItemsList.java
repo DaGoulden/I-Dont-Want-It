@@ -20,11 +20,15 @@ import java.util.List;
 import static net.goulden.idontwantit.client.gui.EditProfileScreen.availableItemsList;
 import static net.goulden.idontwantit.util.GUIVariables.*;
 import static net.goulden.idontwantit.util.RenderUtils.drawCutString;
+import static net.goulden.idontwantit.util.RenderUtils.easeInOutQuart;
 
 public class IgnoredItemsList extends CustomContainerList<IgnoredItemsList.EntryBase> {
 
-    public String profileName;
+    String profileName;
     EditProfileScreen screen;
+    public boolean shouldAvailableListBeOpen;
+    int openListElapsed;
+    public float openListProgress;
 
     public IgnoredItemsList(EditProfileScreen screen, String profileName, int x, int y, int w, int h, int itemHeight) {
         super(x, y, w, h, itemHeight);
@@ -50,7 +54,8 @@ public class IgnoredItemsList extends CustomContainerList<IgnoredItemsList.Entry
                     b -> {
                         ProfileManager.removeIgnoredItem(profileName, item);
                         refreshList();
-                    }
+                    },
+                    2
             );
         }
 
@@ -92,7 +97,6 @@ public class IgnoredItemsList extends CustomContainerList<IgnoredItemsList.Entry
                     height,
                     height
             );
-            removeItemButton.setBackgroundColor(secondaryColor);
             removeItemButton.render(g, mouseX, mouseY, partialTick);
             g.drawCenteredString(font,
                     "x",
@@ -118,9 +122,10 @@ public class IgnoredItemsList extends CustomContainerList<IgnoredItemsList.Entry
 // OPEN AVAILABLE ITEMS LIST BUTTON
             openAvailableItemsListButton = new CustomButton(
                     b -> {
-                        screen.addAvailableItemsList();
+                        shouldAvailableListBeOpen = true;
                         addItemEditBox.setValue("");
-                    }
+                    },
+                    2
             );
 
 // ADD ITEM EDIT BOX
@@ -129,14 +134,20 @@ public class IgnoredItemsList extends CustomContainerList<IgnoredItemsList.Entry
                     text -> {
                         AvailableItemsList.currentFilter = text.toLowerCase();
                         availableItemsList.refreshList();
-                    }
+                    },
+                    2
             );
         }
 
         @Override
         public void render(@NotNull GuiGraphics g, int index, int top, int left, int width, int height, int mouseX, int mouseY, float partialTick) {
 
-            if (!screen.renderables.contains(availableItemsList)) {
+            openListProgress =
+                    !(openListAnimationDuration == 0)
+                            ? easeInOutQuart((float) openListElapsed / openListAnimationDuration)
+                            : shouldAvailableListBeOpen ? 1 : 0;
+
+            if (!shouldAvailableListBeOpen && openListProgress == 0) {
 // OPEN AVAILABLE ITEMS LIST BUTTON
                 openAvailableItemsListButton.setPosition(
                         left,
@@ -146,7 +157,6 @@ public class IgnoredItemsList extends CustomContainerList<IgnoredItemsList.Entry
                         width,
                         height
                 );
-                openAvailableItemsListButton.setBackgroundColor(secondaryColor);
                 openAvailableItemsListButton.render(g, mouseX, mouseY, partialTick);
                 openAvailableItemsListButton.active = true;
                 addItemEditBox.active = false;
@@ -160,9 +170,8 @@ public class IgnoredItemsList extends CustomContainerList<IgnoredItemsList.Entry
                 );
                 addItemEditBox.setSize(
                         width,
-                        customHeight
+                        (int) (height - (height - customHeight) * openListProgress)
                 );
-                addItemEditBox.setBackgroundColor(secondaryColor);
                 addItemEditBox.render(g, mouseX, mouseY, partialTick);
                 addItemEditBox.active = true;
                 openAvailableItemsListButton.active = false;
@@ -180,6 +189,21 @@ public class IgnoredItemsList extends CustomContainerList<IgnoredItemsList.Entry
             if (screen.renderables.contains(availableItemsList)) this.setFocused(addItemEditBox);
             return handled;
         }
+    }
+
+    @Override
+    public void tick() {
+
+        if (shouldAvailableListBeOpen && openListElapsed < openListAnimationDuration) {
+            openListElapsed++;
+        } else if (!shouldAvailableListBeOpen && openListElapsed > 0) {
+            openListElapsed--;
+        } else if (openListElapsed > openListAnimationDuration) {
+            openListElapsed = 0;
+        }
+
+        super.tick();
+
     }
 
     public void refreshList() {
@@ -201,10 +225,6 @@ public class IgnoredItemsList extends CustomContainerList<IgnoredItemsList.Entry
 
         for (Item item : items) addEntry(new IgnoredItemEntry(item));
         addEntry(new AddIgnoredItemEntry());
-    }
-
-    public void tick() {
-        super.tick();
     }
 
     public void changeProfileName(String newName) {

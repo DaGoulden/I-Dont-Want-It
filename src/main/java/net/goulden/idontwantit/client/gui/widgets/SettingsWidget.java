@@ -93,7 +93,8 @@ public class SettingsWidget extends AbstractContainerWidget {
 
                 this.hexBox = new CustomEditBox(
                         8,
-                        String.format("%08X", getter.getAsInt())
+                        String.format("%08X", getter.getAsInt()),
+                        1
                 );
                 this.hexBox.setResponder(this::onTextChanged);
             }
@@ -156,7 +157,8 @@ public class SettingsWidget extends AbstractContainerWidget {
 
                 this.numberBox = new CustomEditBox(
                         5,
-                        String.valueOf(getter.getAsInt())
+                        String.valueOf(getter.getAsInt()),
+                        1
                 );
                 this.numberBox.setResponder(this::onTextChanged);
                 this.numberBox.setFilter(s -> s.isEmpty() || s.matches("\\d+"));

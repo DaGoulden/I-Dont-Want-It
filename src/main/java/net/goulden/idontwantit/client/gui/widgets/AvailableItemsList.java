@@ -23,12 +23,6 @@ public class AvailableItemsList extends CustomContainerList<AvailableItemsList.I
     public String profileName;
     public static String currentFilter = "";
 
-    public AvailableItemsList(String profileName, int x, int y, int w, int h, int itemHeight) {
-        super(x, y, w, h, itemHeight);
-        this.profileName = profileName;
-        refreshList();
-    }
-
     public AvailableItemsList(String profileName) {
         this.profileName = profileName;
         refreshList();
@@ -48,7 +42,8 @@ public class AvailableItemsList extends CustomContainerList<AvailableItemsList.I
                     b -> {
                         ProfileManager.addIgnoredItem(profileName, item);
                         refreshList();
-                    }
+                    },
+                    2
             );
         }
 
@@ -90,7 +85,6 @@ public class AvailableItemsList extends CustomContainerList<AvailableItemsList.I
                     height,
                     height
             );
-            addButton.setBackgroundColor(secondaryColor);
             addButton.render(g, mouseX, mouseY, partialTick);
             g.drawCenteredString(font,
                     "+",

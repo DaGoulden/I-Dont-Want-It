@@ -37,20 +37,13 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
         private final CustomButton moveUpButton;
         private final CustomButton moveDownButton;
         private final ProfileStateButton stateButton;
-        private final CustomButton deleteButton;
+        private final ProfileDeleteButton deleteButton;
 
         final String profileName;
-
         boolean isMouseOverProfile;
-
-        int stateButtonElapsed;
-        int deleteConfirmationElapsed;
 
         public ProfileEntry(String profileName) {
             this.profileName = profileName;
-
-            stateButtonElapsed = ProfileManager.isProfileActive(profileName) ? stateButtonDuration : 0;
-            deleteConfirmationElapsed = deleteConfirmationDuration + 1;
 
 // PROFILE BUTTON
             profileButton = new CustomButton(
@@ -59,7 +52,8 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
                                     parent,
                                     profileName
                             )
-                    )
+                    ),
+                    2
             );
 
 // MOVE UP BUTTON
@@ -67,7 +61,8 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
                     b -> {
                         ProfileManager.moveProfileUp(profileName);
                         refreshList();
-                    }
+                    },
+                    2
             );
 
 // MOVE DOWN BUTTON
@@ -75,25 +70,24 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
                     b -> {
                         ProfileManager.moveProfileDown(profileName);
                         refreshList();
-                    }
+                    },
+                    2
             );
 
 // STATE BUTTON
             stateButton = new ProfileStateButton(
                     b -> ProfileManager.toggleProfileState(profileName),
                     profileName,
-                    stateButtonElapsed
+                    2
             );
 
 // DELETE BUTTON
-            deleteButton = new CustomButton(
-                    b -> {
-                        if (deleteConfirmationElapsed < deleteConfirmationDuration) {
-                            ProfileManager.deleteProfile(profileName);
-                            refreshList();
-                        }
-                        deleteConfirmationElapsed = 0;
-                    }
+            deleteButton = new ProfileDeleteButton(
+                    () -> {
+                        ProfileManager.deleteProfile(profileName);
+                        refreshList();
+                    },
+                    2
             );
         }
 
@@ -114,7 +108,6 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
                     isMouseOverProfile ? width - height * 2 - height / 2 - spaceBetweenButtons : width - height * 2 - spaceBetweenButtons,
                     height
             );
-            profileButton.setBackgroundColor(secondaryColor);
             profileButton.render(g, mouseX, mouseY, partialTick);
             g.renderItem(
                     new ItemStack(ProfileManager.getProfile(profileName).getIconItem()),
@@ -134,7 +127,7 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
                     profileCount + (profileCount == 1 ? " item" : " items"),
                     left + height + spacedText,
                     top + spacedText + fontHeight + spacedText / 4 * 2,
-                    linesColor | (0xAA << 24)
+                    (linesColor & 0x00FFFFFF) | 0xBB000000
             );
 
 // MOVE UP BUTTON
@@ -146,7 +139,6 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
                     height / 2,
                     height / 2
             );
-            moveUpButton.setBackgroundColor(secondaryColor);
             if (isMouseOverProfile) {
                 if (myIndex > 0) {
                     moveUpButton.render(g, mouseX, mouseY, partialTick);
@@ -176,7 +168,6 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
                     height / 2,
                     height / 2
             );
-            moveDownButton.setBackgroundColor(secondaryColor);
             if (isMouseOverProfile) {
                 if (myIndex < allNames.size() - 1) {
                     moveDownButton.render(g, mouseX, mouseY, partialTick);
@@ -206,8 +197,6 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
                     height,
                     height
             );
-            stateButton.setBackgroundColor(secondaryColor);
-            stateButton.setElapsed(stateButtonElapsed);
             stateButton.render(g, mouseX, mouseY, partialTick);
 
 // DELETE BUTTON
@@ -219,44 +208,14 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
                     height,
                     height
             );
-            deleteButton.setBackgroundColor(secondaryColor);
             deleteButton.render(g, mouseX, mouseY, partialTick);
-            g.drawCenteredString(font,
-                    "\uD83D\uDDD1",
-                    deleteButton.getX() + deleteButton.getWidth() / 2,
-                    deleteButton.getY() + (deleteButton.getHeight() - fontHeight) / 2,
-                    linesColor
-            );
-            if (deleteConfirmationElapsed <= deleteConfirmationDuration) {
-                float deleteProgress = easeInOutCubic((float) deleteConfirmationElapsed / deleteConfirmationDuration);
-                int deleteAlpha = Math.max(5, (int)((1f - deleteProgress) * 255));
-                g.fill(deleteButton.getX(),
-                        deleteButton.getY(),
-                        deleteButton.getRight(),
-                        deleteButton.getBottom(),
-                        (deleteAlpha << 24) | (badMeaningColor & 0x00FFFFFF)
-                );
-                g.drawCenteredString(font,
-                        "¿\uD83D\uDDD1?",
-                        deleteButton.getX() + deleteButton.getWidth() / 2,
-                        deleteButton.getY() + (deleteButton.getHeight() - fontHeight) / 2,
-                        linesColor | (deleteAlpha << 24)
-                );
-            }
         }
 
         public void tick() {
 
-            boolean isActive = ProfileManager.isProfileActive(profileName);
-            if (isActive && stateButtonElapsed < stateButtonDuration) {
-                stateButtonElapsed++;
-            } else if (!isActive && stateButtonElapsed > 0) {
-                stateButtonElapsed--;
-            }
+            stateButton.tick();
+            deleteButton.tick();
 
-            if (deleteConfirmationElapsed <= deleteConfirmationDuration) {
-                deleteConfirmationElapsed++;
-            }
         }
 
         @Override
@@ -284,7 +243,8 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
 
                         ProfileManager.createProfile(name, "minecraft:paper");
                         refreshList();
-                    }
+                    },
+                    2
             );
         }
 
@@ -300,7 +260,6 @@ public class ProfilesList extends CustomContainerList<ProfilesList.EntryBase> {
                     width,
                     height
             );
-            createProfileButton.setBackgroundColor(secondaryColor);
             createProfileButton.render(g, mouseX, mouseY, partialTick);
         }
 

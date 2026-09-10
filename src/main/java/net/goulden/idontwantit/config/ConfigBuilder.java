@@ -34,28 +34,29 @@ public class ConfigBuilder {
         protected final ModConfigSpec.IntValue deleteConfirmationDuration;
         protected final ModConfigSpec.IntValue editBoxConfirmationDuration;
         protected final ModConfigSpec.IntValue scrollbarAnimationDuration;
+        protected final ModConfigSpec.IntValue openListAnimationDuration;
 
         Client(ModConfigSpec.Builder builder) {
             primaryColor = builder
-                    .comment("Primary color (ARGB hex, 8 characters)")
+                    .comment("Primary color (ARGB)")
                     .define("primaryColor", "99000000");
             secondaryColor = builder
-                    .comment("Secondary color (ARGB hex, 8 characters)")
+                    .comment("Secondary color (ARGB)")
                     .define("secondaryColor", "55000000");
             tertiaryColor = builder
-                    .comment("Tertiary color (ARGB hex, 8 characters)")
+                    .comment("Tertiary color (ARGB)")
                     .define("tertiaryColor", "22000000");
             hoveredAdditiveColor = builder
-                    .comment("Additive color when a button is hovered (ARGB hex, 8 characters)")
+                    .comment("Additive color when a button is hovered (ARGB)")
                     .define("hoveredAdditiveColor", "55000000");
             linesColor = builder
-                    .comment("Text and simple lines color (RGB hex, 6 characters)")
-                    .define("linesColor", "FFFFFF");
+                    .comment("Text and simple lines color (RGB)")
+                    .define("linesColor", "FFFFFFFF");
             goodMeaningColor = builder
-                    .comment("Color that means something is active or right (ARGB hex, 8 characters)")
+                    .comment("Color that means something is active or right (ARGB)")
                     .define("goodMeaningColor", "FF00AA00");
             badMeaningColor = builder
-                    .comment("Color that means something is unactive or wrong (ARGB hex, 8 characters)")
+                    .comment("Color that means something is unactive or wrong (ARGB)")
                     .define("badMeaningColor", "FFAA0000");
 
             spacedX = builder
@@ -83,6 +84,9 @@ public class ConfigBuilder {
             scrollbarAnimationDuration = builder
                     .comment("The duration of the scrollbar appearing animation")
                     .defineInRange("scrollbarAnimationDuration", 10, 0, 50);
+            openListAnimationDuration = builder
+                    .comment("The duration of the animation when opening the list")
+                    .defineInRange("openListAnimationDuration", 20, 0, 80);
         }
     }
 }

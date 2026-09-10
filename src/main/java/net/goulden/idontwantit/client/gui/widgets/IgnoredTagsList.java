@@ -48,7 +48,8 @@ public class IgnoredTagsList extends CustomContainerList<IgnoredTagsList.EntryBa
                         refreshList();
                     },
                     "x",
-                    true
+                    true,
+                    2
             );
         }
 
@@ -81,7 +82,6 @@ public class IgnoredTagsList extends CustomContainerList<IgnoredTagsList.EntryBa
                     height,
                     height
             );
-            removeTagButton.setBackgroundColor(secondaryColor);
             removeTagButton.render(g, mouseX, mouseY, partialTick);
             g.drawCenteredString(font,
                     "x",
@@ -107,7 +107,8 @@ public class IgnoredTagsList extends CustomContainerList<IgnoredTagsList.EntryBa
             addTagButton = new CustomButton(
                     b -> {
                         refreshList();
-                    }
+                    },
+                    2
             );
         }
 
@@ -123,7 +124,6 @@ public class IgnoredTagsList extends CustomContainerList<IgnoredTagsList.EntryBa
                     width,
                     height
             );
-            addTagButton.setBackgroundColor(secondaryColor);
             addTagButton.render(g, mouseX, mouseY, partialTick);
         }
 

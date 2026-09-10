@@ -1,7 +1,6 @@
 package net.goulden.idontwantit.util;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.network.chat.Component;
 
 import static net.goulden.idontwantit.util.GUIVariables.*;
 
@@ -10,14 +9,14 @@ public final class RenderUtils {
     private RenderUtils() {}
 
     public static int lerpColor(int color1, int color2, float t) {
-        int a1 = (color1 >> 24) & 0xFF;
-        int r1 = (color1 >> 16) & 0xFF;
-        int g1 = (color1 >> 8) & 0xFF;
+        int a1 = (color1 >>> 24) & 0xFF;
+        int r1 = (color1 >>> 16) & 0xFF;
+        int g1 = (color1 >>> 8) & 0xFF;
         int b1 = color1 & 0xFF;
 
-        int a2 = (color2 >> 24) & 0xFF;
-        int r2 = (color2 >> 16) & 0xFF;
-        int g2 = (color2 >> 8) & 0xFF;
+        int a2 = (color2 >>> 24) & 0xFF;
+        int r2 = (color2 >>> 16) & 0xFF;
+        int g2 = (color2 >>> 8) & 0xFF;
         int b2 = color2 & 0xFF;
 
         int a = (int)(a1 + (a2 - a1) * t);
@@ -28,8 +27,10 @@ public final class RenderUtils {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
-    public static float easeInOutCubic(float t) {
-        return t < 0.5F ? 4.0F * t * t * t : 1.0F - (float) Math.pow(-2.0F * t + 2.0F, 3) / 2.0F;
+    public static float easeInOutQuart(float t) {
+        if (t < 0.5f) return 8f * t * t * t * t;
+        float f = -2f * t + 2f;
+        return 1f - (f * f * f * f) / 2f;
     }
 
     public static void renderCustomOutline(GuiGraphics g, int x, int y, int width, int height, boolean renderUpLine, int color) {

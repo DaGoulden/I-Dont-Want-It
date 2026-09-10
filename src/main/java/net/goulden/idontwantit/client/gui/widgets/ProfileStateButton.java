@@ -6,24 +6,24 @@ import net.minecraft.client.gui.GuiGraphics;
 import org.jetbrains.annotations.NotNull;
 
 import static net.goulden.idontwantit.util.GUIVariables.*;
-import static net.goulden.idontwantit.util.RenderUtils.easeInOutCubic;
+import static net.goulden.idontwantit.util.RenderUtils.easeInOutQuart;
 import static net.goulden.idontwantit.util.RenderUtils.lerpColor;
 
 public class ProfileStateButton extends CustomButton {
 
     private final String profileName;
-    private int elapsed;
+    private int animationElapsed;
 
-    public ProfileStateButton(OnPress onPress, String profileName, int elapsed) {
-        super(onPress);
+    public ProfileStateButton(OnPress onPress, String profileName, int backgroundColor) {
+        super(onPress, backgroundColor);
         this.profileName = profileName;
-        this.elapsed = elapsed;
+        animationElapsed = ProfileManager.isProfileActive(profileName) ? stateButtonDuration : 0;
     }
 
-    public ProfileStateButton(OnPress onPress, String profileName, int elapsed, int x, int y, int w, int h, int color) {
-        super(onPress, x, y, w, h, color);
+    public ProfileStateButton(OnPress onPress, String profileName, int x, int y, int w, int h, int backgroundColor) {
+        super(onPress, x, y, w, h, backgroundColor);
         this.profileName = profileName;
-        this.elapsed = elapsed;
+        animationElapsed = ProfileManager.isProfileActive(profileName) ? stateButtonDuration : 0;
     }
 
     @Override
@@ -36,7 +36,7 @@ public class ProfileStateButton extends CustomButton {
         int y = getY() + getHeight() / 2 - h / 2;
         float progress =
                 !(stateButtonDuration == 0)
-                        ? easeInOutCubic((float) elapsed / stateButtonDuration)
+                        ? easeInOutQuart((float) animationElapsed / stateButtonDuration)
                         : ProfileManager.isProfileActive(profileName) ? 1 : 0;
 
         g.renderOutline(
@@ -44,7 +44,7 @@ public class ProfileStateButton extends CustomButton {
                 y,
                 w,
                 h,
-                linesColor | (0xFF << 24)
+                linesColor
         );
 
         g.pose().pushPose();
@@ -62,7 +62,13 @@ public class ProfileStateButton extends CustomButton {
         g.pose().popPose();
     }
 
-    public void setElapsed(int elapsed) {
-        this.elapsed = elapsed;
+    public void tick() {
+        if (ProfileManager.isProfileActive(profileName) && animationElapsed < stateButtonDuration) {
+            animationElapsed++;
+        } else if (!ProfileManager.isProfileActive(profileName) && animationElapsed > 0) {
+            animationElapsed--;
+        } else if (animationElapsed > stateButtonDuration) {
+            animationElapsed = ProfileManager.isProfileActive(profileName) ? stateButtonDuration : 0;
+        }
     }
 }

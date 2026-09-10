@@ -62,7 +62,7 @@ public class MainScreen extends Screen {
                 secondLineStartInY,
                 width - spacedX * 2 - customHeight - whitelistButtonWidth - spaceBetweenButtons * 2,
                 customHeight,
-                primaryColor
+                1
         );
         addRenderableWidget(closeButton);
 
@@ -75,7 +75,7 @@ public class MainScreen extends Screen {
                 secondLineStartInY,
                 whitelistButtonWidth,
                 customHeight,
-                primaryColor
+                1
         );
         addRenderableWidget(whitelistButton);
 
@@ -98,7 +98,7 @@ public class MainScreen extends Screen {
                 secondLineStartInY,
                 customHeight,
                 customHeight,
-                primaryColor
+                1
         );
         addRenderableWidget(settingsButton);
     }
@@ -142,7 +142,7 @@ public class MainScreen extends Screen {
                 activeCountText,
                 width - spacedX - font.width(activeCountText) - spacedText,
                 spacedY + spacedText,
-                linesColor | (0xBB << 24)
+                (linesColor & 0x00FFFFFF) | 0xCC000000
         );
 
 // LIST OF PROFILES
@@ -165,8 +165,6 @@ public class MainScreen extends Screen {
                 width - spacedX * 2 - customHeight - whitelistButtonWidth - spaceBetweenButtons * 2,
                 customHeight
         );
-        closeButton.setBackgroundColor(primaryColor);
-        closeButton.setTextUsedColor(linesColor);
 
 // WHITELIST MODE BUTTON
         whitelistButton.setPosition(
@@ -177,14 +175,12 @@ public class MainScreen extends Screen {
                 whitelistButtonWidth,
                 customHeight
         );
-        whitelistButton.setBackgroundColor(primaryColor);
-        whitelistButton.setTextUsedColor(linesColor);
         g.renderOutline(
                 checkboxX,
                 checkboxY,
                 checkboxSize,
                 checkboxSize,
-                linesColor | (0xFF << 24)
+                linesColor
         );
         g.fill(checkboxX + 2,
                 checkboxY + 2,
@@ -202,8 +198,6 @@ public class MainScreen extends Screen {
                 customHeight,
                 customHeight
         );
-        settingsButton.setBackgroundColor(primaryColor);
-        settingsButton.setTextUsedColor(linesColor);
         g.pose().pushPose();
         g.pose().translate(
                 settingsButtonX + (float) customHeight / 2,
@@ -223,6 +217,17 @@ public class MainScreen extends Screen {
                 true
         );
         g.pose().popPose();
+    }
+
+    public void tick() {
+
+        profilesList.tick();
+
+        for (var entry : profilesList.children()) {
+            if (entry instanceof ProfilesList.ProfileEntry profileEntry) {
+                profileEntry.tick();
+            }
+        }
     }
 
     @Override
@@ -247,16 +252,5 @@ public class MainScreen extends Screen {
     public boolean charTyped(char chr, int keyCode) {
         if (settingsWidget != null) return settingsWidget.charTyped(chr, keyCode);
         return super.charTyped(chr, keyCode);
-    }
-
-    public void tick() {
-
-        profilesList.tick();
-
-        for (var entry : profilesList.children()) {
-            if (entry instanceof ProfilesList.ProfileEntry profileEntry) {
-                profileEntry.tick();
-            }
-        }
     }
 }

@@ -40,5 +40,6 @@ public class ConfigEvent {
         GUIVariables.deleteConfirmationDuration = CLIENT.deleteConfirmationDuration.get();
         GUIVariables.editBoxConfirmationDuration = CLIENT.editBoxConfirmationDuration.get();
         GUIVariables.scrollbarAnimationDuration = CLIENT.scrollbarAnimationDuration.get();
+        GUIVariables.openListAnimationDuration = CLIENT.openListAnimationDuration.get();
     }
 }

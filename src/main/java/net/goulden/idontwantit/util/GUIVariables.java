@@ -31,6 +31,7 @@ public final class GUIVariables {
     public static int deleteConfirmationDuration;
     public static int editBoxConfirmationDuration;
     public static int scrollbarAnimationDuration;
+    public static int openListAnimationDuration;
 
     // Font
     public static Font font; // Automatic

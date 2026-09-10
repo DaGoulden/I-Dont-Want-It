@@ -38,7 +38,6 @@ public class IconSelectorWidget extends AbstractContainerWidget {
         super(spacedX + 20, spacedY + customHeight + spaceBetweenButtons, 200, 250, Component.literal("Hola"));
         this.onClose = onClose;
         this.profileName = profileName;
-
         init();
     }
 

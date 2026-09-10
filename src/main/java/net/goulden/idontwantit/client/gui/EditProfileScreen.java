@@ -20,6 +20,7 @@ public class EditProfileScreen extends Screen {
 
     Screen parent;
     String profileName;
+    boolean shouldGoToBottom = true;
 
     public EditProfileScreen(Screen parent, String profileName) {
         super(Component.empty());
@@ -48,20 +49,12 @@ public class EditProfileScreen extends Screen {
     public static IgnoredTagsList ignoredTagsList;
     CustomButton closeButton;
     IconSelectorWidget iconSelectorWidget;
-
-    int editBoxConfirmationElapsed;
-    boolean changedNameSuccessfully;
-    int stateButtonElapsed;
-
+    
     @Override
     protected void init() {
         super.init();
 
         recalculate(height, font);
-
-        editBoxConfirmationElapsed = editBoxConfirmationDuration + 1;
-        changedNameSuccessfully = false;
-        stateButtonElapsed = ProfileManager.isProfileActive(profileName) ? stateButtonDuration : 0;
 
 // ICON SELECTOR BUTTON
         iconSelectorButton = new CustomButton(
@@ -76,7 +69,7 @@ public class EditProfileScreen extends Screen {
                 spacedY,
                 cornerButtonsSize,
                 cornerButtonsSize,
-                primaryColor
+                1
         );
         addRenderableWidget(iconSelectorButton);
 
@@ -84,11 +77,16 @@ public class EditProfileScreen extends Screen {
         nameEditBox = new CustomEditBox(
                 16,
                 profileName,
+                () -> {
+                    ProfileManager.renameProfile(profileName, nameEditBox.getValue().trim());
+                    this.profileName = nameEditBox.getValue().trim();
+                    ignoredItemsList.changeProfileName(nameEditBox.getValue().trim());
+                },
                 spacedX + cornerButtonsSize + spaceBetweenButtons,
                 spacedY,
                 width - spacedX * 2 - cornerButtonsSize * 2 - spaceBetweenButtons * 2,
                 customHeight,
-                primaryColor
+                1
         );
         addRenderableWidget(nameEditBox);
 
@@ -96,12 +94,11 @@ public class EditProfileScreen extends Screen {
         stateButton = new ProfileStateButton(
                 b -> ProfileManager.toggleProfileState(profileName),
                 profileName,
-                stateButtonElapsed,
                 width - spacedX - cornerButtonsSize,
                 spacedY,
                 cornerButtonsSize,
                 cornerButtonsSize,
-                primaryColor
+                1
         );
         addRenderableWidget(stateButton);
 
@@ -119,7 +116,7 @@ public class EditProfileScreen extends Screen {
                 spacedY + customHeight + spaceBetweenButtons,
                 (width - spacedX * 2 - cornerButtonsSize * 2 - spaceBetweenButtons * 2) / 2 - spaceBetweenButtons * 2,
                 customHeight,
-                secondaryColor
+                2
         );
         addRenderableWidget(itemsTabButton);
 
@@ -137,7 +134,7 @@ public class EditProfileScreen extends Screen {
                 spacedY + customHeight + spaceBetweenButtons,
                 (width - spacedX * 2 - cornerButtonsSize * 2 - spaceBetweenButtons * 2) / 2 - spaceBetweenButtons * 2,
                 customHeight,
-                tertiaryColor
+                2
         );
         addRenderableWidget(tagsTabButton);
 
@@ -177,7 +174,7 @@ public class EditProfileScreen extends Screen {
                 secondLineStartInY,
                 width - spacedX * 2,
                 customHeight,
-                primaryColor
+                1
         );
         addRenderableWidget(closeButton);
     }
@@ -187,7 +184,6 @@ public class EditProfileScreen extends Screen {
         super.render(g, mouseX, mouseY, partialTick);
 
         recalculate(height, font);
-        String newName = nameEditBox.getValue().trim();
 
 // ICON SELECTOR BUTTON
         iconSelectorButton.setPosition(
@@ -198,7 +194,6 @@ public class EditProfileScreen extends Screen {
                 cornerButtonsSize,
                 cornerButtonsSize
         );
-        iconSelectorButton.setBackgroundColor(primaryColor);
         g.pose().pushPose();
         g.pose().translate(
                 spacedX + spacedText,
@@ -226,21 +221,8 @@ public class EditProfileScreen extends Screen {
                 width - spacedX * 2 - cornerButtonsSize * 2 - spaceBetweenButtons * 2,
                 customHeight
         );
-        nameEditBox.setBackgroundColor(primaryColor);
-        if (!nameEditBox.isFocused() && ProfileManager.getAllProfiles().containsKey(newName) && !newName.equals(profileName)) {
-            editBoxConfirmationElapsed = 0;
-        }
-        if (editBoxConfirmationElapsed <= editBoxConfirmationDuration) {
-            float errorProgress = easeInOutCubic((float) editBoxConfirmationElapsed / editBoxConfirmationDuration);
-            int errorAlpha = Math.max(5, (int) ((1f - errorProgress) * 255));
-            int color = changedNameSuccessfully ? goodMeaningColor : badMeaningColor;
-            g.drawString(font,
-                    newName,
-                    nameEditBox.getX() + spacedText,
-                    nameEditBox.getY() + spacedText,
-                    (errorAlpha << 24) | (color & 0x00FFFFFF)
-            );
-        }
+        String value = nameEditBox.getValue().trim();
+        nameEditBox.setIsWrongValue(ProfileManager.getAllProfiles().containsKey(value) && !value.equals(profileName));
 
 // STATE BUTTON
         stateButton.setPosition(
@@ -251,8 +233,6 @@ public class EditProfileScreen extends Screen {
                 cornerButtonsSize,
                 cornerButtonsSize
         );
-        stateButton.setBackgroundColor(primaryColor);
-        stateButton.setElapsed(stateButtonElapsed);
 
 // ITEMS TAB
         itemsTabButton.setPosition(
@@ -263,8 +243,7 @@ public class EditProfileScreen extends Screen {
                 (width - spacedX * 2 - cornerButtonsSize * 2 - spaceBetweenButtons * 2) / 2 - spaceBetweenButtons * 2,
                 customHeight
         );
-        itemsTabButton.setBackgroundColor(renderables.contains(ignoredItemsList) ? secondaryColor : tertiaryColor);
-        itemsTabButton.setTextUsedColor(renderables.contains(ignoredItemsList) ? linesColor : linesColor | (0x99 << 24));
+        itemsTabButton.setLowOpacity(!renderables.contains(ignoredItemsList));
         itemsTabButton.setHoverable(!renderables.contains(ignoredItemsList));
 
 // TAGS TAB
@@ -276,8 +255,7 @@ public class EditProfileScreen extends Screen {
                 (width - spacedX * 2 - cornerButtonsSize * 2 - spaceBetweenButtons * 2) / 2 - spaceBetweenButtons * 2,
                 customHeight
         );
-        tagsTabButton.setBackgroundColor(renderables.contains(ignoredTagsList) ? secondaryColor : tertiaryColor);
-        tagsTabButton.setTextUsedColor(renderables.contains(ignoredTagsList) ? linesColor : linesColor | (0x99 << 24));
+        tagsTabButton.setLowOpacity(!renderables.contains(ignoredTagsList));
         tagsTabButton.setHoverable(!renderables.contains(ignoredTagsList));
 
 // LIST BORDER
@@ -317,20 +295,27 @@ public class EditProfileScreen extends Screen {
         }
 
 // AVAILABLE ITEMS LIST
-        if (renderables.contains(availableItemsList)) {
 
+        if (renderables.contains(availableItemsList) && ignoredItemsList.openListProgress == 0) {
+            removeWidget(availableItemsList);
+        } else if (!renderables.contains(availableItemsList) && ignoredItemsList.openListProgress != 0) {
+            addRenderableWidget(availableItemsList);
+        }
+        if (ignoredItemsList.openListProgress != 0) {
             availableItemsList.setPosition(
                     addItemEditBox.getX() + spaceBetweenButtons * 2,
                     addItemEditBox.getBottom() + spaceBetweenButtons
             );
             availableItemsList.setSize(
                     addItemEditBox.getWidth() - spaceBetweenButtons * 4,
-                    150 - spaceBetweenButtons * 3
+                    (int) ((ignoredItemsList.getHeight() - customHeight) * ignoredItemsList.openListProgress - spaceBetweenButtons * 3)
             );
             availableItemsList.setItemHeight(iconSize + spacedText / 2 * 2);
             availableItemsList.setScissorBottom(Math.min(ignoredItemsList.getBottom(), availableItemsList.getBottom()));
 
-            ignoredItemsList.addToMaxPosition(150);
+            ignoredItemsList.addToMaxPosition(-ignoredItemsList.getItemHeight() + availableItemsList.getHeight() + spaceBetweenButtons * 3 + customHeight);
+            if (shouldGoToBottom && ignoredItemsList.shouldAvailableListBeOpen) ignoredItemsList.setScrollAmount(ignoredItemsList.getMaxScroll());
+            shouldGoToBottom = ignoredItemsList.openListProgress != 1;
 
             g.enableScissor(
                     ignoredItemsList.getX(),
@@ -342,14 +327,11 @@ public class EditProfileScreen extends Screen {
                     addItemEditBox.getX(),
                     addItemEditBox.getBottom(),
                     addItemEditBox.getWidth(),
-                    150,
+                    Math.max((int) ((ignoredItemsList.getHeight() - customHeight) * ignoredItemsList.openListProgress), spaceBetweenButtons),
                     false,
                     secondaryColor
             );
             g.disableScissor();
-
-        } else {
-            ignoredItemsList.addToMaxPosition(0);
         }
 
 // CLOSE BUTTON
@@ -361,22 +343,32 @@ public class EditProfileScreen extends Screen {
                 width - spacedX * 2,
                 customHeight
         );
-        closeButton.setBackgroundColor(primaryColor);
-        closeButton.setTextUsedColor(linesColor);
+    }
+
+    public void tick() {
+
+        stateButton.tick();
+        nameEditBox.tick();
+
+        ignoredItemsList.tick();
+        availableItemsList.tick();
+        ignoredTagsList.tick();
+        //availableTagsList.tick();
+        
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
 
-        if (!nameEditBox.isMouseOver(mouseX, mouseY)) tryToChangeProfileName();
+        if (!nameEditBox.isMouseOver(mouseX, mouseY) && nameEditBox.isFocused()) nameEditBox.submitValue();
 
         if (renderables.contains(availableItemsList)
-                && (mouseX < ignoredItemsList.getX() - spaceBetweenButtons * 2
-                || mouseX > ignoredItemsList.getRight() + spaceBetweenButtons * 2
-                || mouseY < ignoredItemsList.getY() - spaceBetweenButtons * 2
-                || mouseY > ignoredItemsList.getBottom() + spaceBetweenButtons * 2)
+                && !(mouseX >= ignoredItemsList.getX() - spaceBetweenButtons * 2
+                && mouseX <= ignoredItemsList.getRight() + spaceBetweenButtons * 2
+                && mouseY >= ignoredItemsList.getY() - spaceBetweenButtons * 2
+                && mouseY <= ignoredItemsList.getBottom() + spaceBetweenButtons * 2)
         ) {
-            removeWidget(availableItemsList);
+            ignoredItemsList.shouldAvailableListBeOpen = false;
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
@@ -385,7 +377,7 @@ public class EditProfileScreen extends Screen {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
 
-        if (keyCode == GLFW_KEY_ENTER || keyCode == GLFW_KEY_KP_ENTER && nameEditBox.isFocused()) tryToChangeProfileName();
+        if ((keyCode == GLFW_KEY_ENTER || keyCode == GLFW_KEY_KP_ENTER) && nameEditBox.isFocused()) nameEditBox.submitValue();
 
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
@@ -420,50 +412,5 @@ public class EditProfileScreen extends Screen {
         }
 
         return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
-    }
-
-    public void tick() {
-
-        ignoredItemsList.tick();
-        availableItemsList.tick();
-        ignoredTagsList.tick();
-        //availableTagsList.tick();
-
-        if (editBoxConfirmationElapsed <= editBoxConfirmationDuration) {
-            editBoxConfirmationElapsed++;
-        }
-        if (editBoxConfirmationElapsed == editBoxConfirmationDuration + 1) {
-            changedNameSuccessfully = false;
-        }
-
-        if (ProfileManager.isProfileActive(profileName) && stateButtonElapsed < stateButtonDuration) {
-            stateButtonElapsed++;
-        } else if (!ProfileManager.isProfileActive(profileName) && stateButtonElapsed > 0) {
-            stateButtonElapsed--;
-        }
-    }
-
-    public void tryToChangeProfileName() {
-
-        String newName = nameEditBox.getValue().trim();
-        if (newName.equals(profileName)) {
-            nameEditBox.setFocused(false);
-        } else if (newName.isEmpty()) {
-            nameEditBox.setValue(profileName);
-            nameEditBox.setFocused(false);
-        } else if (ProfileManager.getAllProfiles().containsKey(newName)) {
-            editBoxConfirmationElapsed = 0;
-        } else {
-            ProfileManager.renameProfile(profileName, newName);
-            nameEditBox.setFocused(false);
-            profileName = newName;
-            ignoredItemsList.changeProfileName(newName);
-            editBoxConfirmationElapsed = 0;
-            changedNameSuccessfully = true;
-        }
-    }
-
-    public void addAvailableItemsList() {
-        if (!renderables.contains(availableItemsList)) addRenderableWidget(availableItemsList);
     }
 }

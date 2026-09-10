@@ -17,7 +17,7 @@ import java.util.AbstractList;
 import java.util.List;
 
 import static net.goulden.idontwantit.util.GUIVariables.*;
-import static net.goulden.idontwantit.util.RenderUtils.easeInOutCubic;
+import static net.goulden.idontwantit.util.RenderUtils.easeInOutQuart;
 
 @OnlyIn(Dist.CLIENT)
 public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>> extends AbstractContainerWidget {
@@ -62,6 +62,10 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
 
     public void setItemHeight(int itemHeight) {
         this.itemHeight = itemHeight;
+    }
+
+    public int getItemHeight() {
+        return itemHeight;
     }
 
     public void addToMaxPosition(int height) {
@@ -118,7 +122,7 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
         g.enableScissor(getX(), getY(), getRight() + 100, scissorBottom);
         renderItems(g, mouseX, mouseY, partialTick);
         g.disableScissor();
-        g.enableScissor(getX(), getY(), getRight(), scissorBottom);
+        g.enableScissor(getRight() - scrollbarWidth, getY(), getRight(), scissorBottom);
         if (isScrollbarVisible()) renderScrollbar(g);
         g.disableScissor();
     }
@@ -137,7 +141,7 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
     protected void renderScrollbar(GuiGraphics g) {
         scrollbarAnimationProgress =
                 !(scrollbarAnimationDuration == 0)
-                ? easeInOutCubic((float) scrollbarAnimationElapsed / scrollbarAnimationDuration)
+                ? easeInOutQuart((float) scrollbarAnimationElapsed / scrollbarAnimationDuration)
                 : 0;
         int maxScrollbarHeight = Mth.clamp((int)((float)(height * height) / (float)getMaxPosition()), 32, height - 4);
         int scrollbarY = (int)getScrollAmount() * (height - maxScrollbarHeight) / getMaxScroll() + getY();
