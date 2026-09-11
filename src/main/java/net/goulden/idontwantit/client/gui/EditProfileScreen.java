@@ -21,6 +21,7 @@ public class EditProfileScreen extends Screen {
     Screen parent;
     String profileName;
     boolean shouldGoToBottom = true;
+    int listDynamicHeight;
 
     public EditProfileScreen(Screen parent, String profileName) {
         super(Component.empty());
@@ -301,33 +302,38 @@ public class EditProfileScreen extends Screen {
         } else if (!renderables.contains(availableItemsList) && ignoredItemsList.openListProgress != 0) {
             addRenderableWidget(availableItemsList);
         }
+
+        listDynamicHeight = (int) ((ignoredItemsList.getHeight() - customHeight) * ignoredItemsList.openListProgress) - spaceBetweenButtons * 2;
+
         if (ignoredItemsList.openListProgress != 0) {
+
+            availableItemsList.setScissorBottom(Math.min(
+                    addItemEditBox.getBottom() + listDynamicHeight,
+                    ignoredItemsList.getBottom()
+            ));
             availableItemsList.setPosition(
                     addItemEditBox.getX() + spaceBetweenButtons * 2,
                     addItemEditBox.getBottom() + spaceBetweenButtons
             );
             availableItemsList.setSize(
                     addItemEditBox.getWidth() - spaceBetweenButtons * 4,
-                    (int) ((ignoredItemsList.getHeight() - customHeight) * ignoredItemsList.openListProgress - spaceBetweenButtons * 3)
+                    ignoredItemsList.getHeight() - customHeight - spaceBetweenButtons * 3
             );
             availableItemsList.setItemHeight(iconSize + spacedText / 2 * 2);
-            availableItemsList.setScissorBottom(Math.min(ignoredItemsList.getBottom(), availableItemsList.getBottom()));
-
-            ignoredItemsList.addToMaxPosition(-ignoredItemsList.getItemHeight() + availableItemsList.getHeight() + spaceBetweenButtons * 3 + customHeight);
-            if (shouldGoToBottom && ignoredItemsList.shouldAvailableListBeOpen) ignoredItemsList.setScrollAmount(ignoredItemsList.getMaxScroll());
-            shouldGoToBottom = ignoredItemsList.openListProgress != 1;
-
             g.enableScissor(
                     ignoredItemsList.getX(),
                     ignoredItemsList.getY(),
                     ignoredItemsList.getRight(),
-                    ignoredItemsList.getBottom()
+                    Math.min(
+                            addItemEditBox.getBottom() + listDynamicHeight + spaceBetweenButtons * 2,
+                            ignoredItemsList.getBottom()
+                    )
             );
             renderCustomOutline(g,
                     addItemEditBox.getX(),
                     addItemEditBox.getBottom(),
                     addItemEditBox.getWidth(),
-                    Math.max((int) ((ignoredItemsList.getHeight() - customHeight) * ignoredItemsList.openListProgress), spaceBetweenButtons),
+                    ignoredItemsList.getHeight() - customHeight,
                     false,
                     secondaryColor
             );
@@ -347,6 +353,13 @@ public class EditProfileScreen extends Screen {
 
     public void tick() {
 
+        ignoredItemsList.maxPositionAdditive(Math.max(
+                -ignoredItemsList.getItemHeight() + customHeight + listDynamicHeight + spaceBetweenButtons * 2,
+                0
+        ));
+        if (shouldGoToBottom && ignoredItemsList.shouldAvailableListBeOpen) ignoredItemsList.setScrollAmount(ignoredItemsList.getMaxScroll());
+        shouldGoToBottom = ignoredItemsList.openListProgress != 1;
+
         stateButton.tick();
         nameEditBox.tick();
 
@@ -354,7 +367,7 @@ public class EditProfileScreen extends Screen {
         availableItemsList.tick();
         ignoredTagsList.tick();
         //availableTagsList.tick();
-        
+
     }
 
     @Override

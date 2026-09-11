@@ -182,17 +182,14 @@ public class IgnoredItemsList extends CustomContainerList<IgnoredItemsList.Entry
         public @NotNull List<? extends GuiEventListener> children() {
             return List.of(openAvailableItemsListButton, addItemEditBox);
         }
-
-        @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            boolean handled = super.mouseClicked(mouseX, mouseY, button);
-            if (screen.renderables.contains(availableItemsList)) this.setFocused(addItemEditBox);
-            return handled;
-        }
     }
 
     @Override
     public void tick() {
+
+        if (shouldAvailableListBeOpen && openListElapsed == 0 && !AddIgnoredItemEntry.addItemEditBox.isFocused()) {
+            screen.setFocused(AddIgnoredItemEntry.addItemEditBox);
+        }
 
         if (shouldAvailableListBeOpen && openListElapsed < openListAnimationDuration) {
             openListElapsed++;

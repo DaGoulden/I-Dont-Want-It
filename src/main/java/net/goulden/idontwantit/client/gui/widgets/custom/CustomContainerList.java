@@ -68,7 +68,7 @@ public abstract class CustomContainerList<E extends CustomContainerList.Entry<E>
         return itemHeight;
     }
 
-    public void addToMaxPosition(int height) {
+    public void maxPositionAdditive(int height) {
         addMaxPosition = height;
     }
 
